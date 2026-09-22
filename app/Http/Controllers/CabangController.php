@@ -19,6 +19,16 @@ class CabangController extends Controller
         return view('cabang.create');
     }
 
+    public function show(Cabang $cabang)
+    {
+        $cabang->load([
+            'items' => fn ($query) => $query->orderBy('nama_items'),
+            'users' => fn ($query) => $query->orderBy('name'),
+        ]);
+
+        return view('cabang.show', compact('cabang'));
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([

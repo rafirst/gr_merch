@@ -10,12 +10,15 @@ class StockOut extends Model
     use HasFactory;
 
     protected $fillable = [
-        'item_id', 'cabang_id', 'jumlah', 'jenis', 'harga_jual', 'total',
-        'status', 'tanggal', 'keterangan', 'user_id', 'approved_by',
+        'item_id', 'cabang_id', 'jumlah', 'jenis', 'harga_jual', 'discount', 'voucher', 'total',
+        'nomor_spk', 'nomor_telepon', 'nama_customer', 'pic_penjualan', 'batch_id', 'status', 'tanggal', 'keterangan', 'user_id', 'approved_by',
         'approved_at', 'catatan_approval',
     ];
 
     protected $casts = [
+        'harga_jual' => 'decimal:2',
+        'discount' => 'decimal:2',
+        'total' => 'decimal:2',
         'tanggal' => 'date',
         'approved_at' => 'datetime',
     ];
@@ -40,9 +43,9 @@ class StockOut extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    // Penjualan langsung approved otomatis; hadiah & request butuh approval admin pusat
+    // Hanya Request yang membutuhkan approval admin pusat.
     public function butuhApproval(): bool
     {
-        return in_array($this->jenis, ['hadiah', 'request']);
+        return $this->jenis === 'request';
     }
 }

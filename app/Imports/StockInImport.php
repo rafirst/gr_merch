@@ -4,20 +4,15 @@ namespace App\Imports;
 
 use App\Models\Cabang;
 use App\Models\Item;
+use App\Models\StockIn;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Row;
 
-/**
- * Format kolom Excel yang diharapkan (header baris pertama):
- * kode_items | nama_items | kategori | harga_items | harga_jual | kode_cabang
- *
- * Jika kode_items + cabang sudah ada -> data item akan di-update tanpa mengubah stok.
- * Jika belum ada -> akan dibuat item baru dengan stok 0.
- */
-class ItemsImport implements OnEachRow, WithHeadingRow
+class StockInImport implements OnEachRow, WithHeadingRow
 {
     private const BRANCH_CODES = [
         '1' => 'THO',
@@ -50,35 +45,33 @@ class ItemsImport implements OnEachRow, WithHeadingRow
         $kodeItems = $data['kode_items'] ?? $data['kode_item'] ?? null;
         $kodeCabang = (string) ($data['kode_cabang'] ?? '');
         $kodeCabang = self::BRANCH_CODES[$kodeCabang] ?? $kodeCabang;
-
         $cabang = $user->isAdminHo()
             ? Cabang::where('kode_cabang', $kodeCabang)->first()
             : $user->cabang;
+        $item = $cabang
+            ? Item::where('kode_items', $kodeItems)->where('cabang_id', $cabang->id)->first()
+            : null;
+        $jumlah = filter_var($data['jumlah'] ?? null, FILTER_VALIDATE_INT);
 
-        if (! $cabang || empty($kodeItems) || empty($data['nama_items'])) {
+        if (! $cabang || ! $item || ! $jumlah || $jumlah < 1 || empty($data['sumber'])) {
             $this->skippedRows++;
 
             return;
         }
 
-        $kategori = strtolower(trim((string) ($data['kategori'] ?? '')));
+        DB::transaction(function () use ($data, $item, $cabang, $jumlah, $user): void {
+            StockIn::create([
+                'item_id' => $item->id,
+                'cabang_id' => $cabang->id,
+                'jumlah' => $jumlah,
+                'tanggal' => now()->toDateString(),
+                'sumber' => $data['sumber'],
+                'user_id' => $user->id,
+            ]);
 
-        $item = Item::firstOrNew(
-            ['kode_items' => $kodeItems, 'cabang_id' => $cabang->id],
-        );
+            $item->increment('stok_items', $jumlah);
+        });
 
-        $item->fill([
-            'nama_items' => $data['nama_items'],
-            'kategori' => $kategori ?: null,
-            'harga_items' => $data['harga_items'] ?? 0,
-            'harga_jual' => $data['harga_jual'] ?? 0,
-        ]);
-
-        if (! $item->exists) {
-            $item->stok_items = 0;
-        }
-
-        $item->save();
         $this->importedRows++;
     }
 }

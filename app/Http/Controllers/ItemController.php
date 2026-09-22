@@ -48,6 +48,15 @@ class ItemController extends Controller
         return view('items.create', compact('cabangs', 'kategoriOptions'));
     }
 
+    public function show(Item $item)
+    {
+        $this->authorizeCabang($item);
+
+        $item->load('cabang');
+
+        return view('items.show', compact('item'));
+    }
+
     public function store(Request $request)
     {
         /** @var User $user */
@@ -61,12 +70,12 @@ class ItemController extends Controller
             'nama_items' => 'required|string|max:150',
             'kategori' => ['nullable', Rule::in(Item::kategoriOptions())],
             'harga_items' => 'required|numeric|min:0',
-            'stok_items' => 'required|integer|min:0',
-            'stok_minimum' => 'nullable|integer|min:0',
-            'satuan' => 'nullable|string|max:20',
+            'harga_jual' => 'nullable|numeric|min:0',
             'cabang_id' => $user->isAdminHo() ? 'required|exists:cabangs,id' : 'nullable',
             'foto' => 'nullable|image|max:2048',
         ]);
+
+        $data['stok_items'] = 0;
 
         if (! $user->isAdminHo()) {
             $data['cabang_id'] = $user->cabang_id;
@@ -106,8 +115,7 @@ class ItemController extends Controller
             'nama_items' => 'required|string|max:150',
             'kategori' => ['nullable', Rule::in(Item::kategoriOptions())],
             'harga_items' => 'required|numeric|min:0',
-            'stok_minimum' => 'nullable|integer|min:0',
-            'satuan' => 'nullable|string|max:20',
+            'harga_jual' => 'required|numeric|min:0',
             'cabang_id' => $user->isAdminHo() ? 'required|exists:cabangs,id' : 'nullable',
             'foto' => 'nullable|image|max:2048',
         ]);

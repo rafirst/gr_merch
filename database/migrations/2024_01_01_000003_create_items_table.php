@@ -12,11 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string('kode_items');
             $table->string('nama_items');
-            $table->enum('kategori', ['jacket', 'cap', 't-shirt', 'shirt', 'tumbler', 'umbrella'])->nullable();
+            $table->enum('kategori', ['jacket', 't-shirt', 'shirt', 'tumbler', 'umbrella', 'topi'])->nullable();
             $table->decimal('harga_items', 15, 2)->default(0);
             $table->integer('stok_items')->default(0);
-            $table->integer('stok_minimum')->default(5);
-            $table->string('satuan')->default('pcs');
+            $table->decimal('harga_jual', 15, 2)->default(0);
             $table->string('foto')->nullable();
             $table->foreignId('cabang_id')->constrained('cabangs')->cascadeOnDelete();
             $table->timestamps();

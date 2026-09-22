@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class ItemsExport implements FromCollection, WithHeadings, WithMapping
+class StockItemsExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection(): Collection
     {
@@ -27,7 +27,7 @@ class ItemsExport implements FromCollection, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        return ['Kode Items', 'Nama Items', 'Kategori', 'Harga Items', 'Stok Items', 'Harga Jual', 'Cabang'];
+        return ['kode_items', 'nama_items', 'kategori', 'kode_cabang', 'stok_items', 'status_stok'];
     }
 
     public function map($item): array
@@ -36,10 +36,9 @@ class ItemsExport implements FromCollection, WithHeadings, WithMapping
             $item->kode_items,
             $item->nama_items,
             $item->kategori,
-            $item->harga_items,
+            $item->cabang->kode_cabang ?? '-',
             $item->stok_items,
-            $item->harga_jual,
-            $item->cabang->nama_cabang ?? '-',
+            $item->isStokMenipis() ? 'Menipis' : 'Aman',
         ];
     }
 }

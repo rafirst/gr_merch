@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cabang;
 use App\Models\Item;
 use App\Models\StockIn;
 use App\Models\StockOut;
@@ -28,7 +29,6 @@ class DashboardController extends Controller
 
         $totalItems = (clone $itemQuery)->count();
         $totalStok = (clone $itemQuery)->sum('stok_items');
-        $stokMenipis = (clone $itemQuery)->whereColumn('stok_items', '<=', 'stok_minimum')->get();
         $pendingApproval = (clone $stockOutQuery)->where('status', 'pending')->count();
 
         // Grafik in vs out 6 bulan terakhir
@@ -59,9 +59,17 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        $stockItems = (clone $itemQuery)
+            ->with('cabang')
+            ->orderBy('nama_items')
+            ->get();
+        $cabangs = $isAdmin
+            ? Cabang::orderBy('nama_cabang')->get()
+            : Cabang::whereKey($user->cabang_id)->get();
+
         return view('dashboard.index', compact(
-            'totalItems', 'totalStok', 'stokMenipis', 'pendingApproval',
-            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin'
+            'totalItems', 'totalStok', 'pendingApproval',
+            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin', 'stockItems', 'cabangs'
         ));
     }
 }

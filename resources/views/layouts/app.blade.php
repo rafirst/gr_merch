@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard') - GR_merch</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
@@ -46,7 +47,7 @@
             --gazoo-panel: rgba(3, 10, 17, 0.88);
             --gazoo-panel-soft: rgba(5, 14, 23, 0.78);
             --gazoo-border: rgba(255, 255, 255, 0.1);
-            --gazoo-red: #ef1d2f;
+            --gazoo-red: #f70008;
         }
 
         html,
@@ -154,6 +155,16 @@
             padding: 0 1.25rem;
         }
 
+        body.sidebar-mini .main-header,
+        body.sidebar-mini.sidebar-collapse .main-header,
+        body.sidebar-mini.sidebar-open .main-header {
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            margin-left: 0 !important;
+            transform: none !important;
+        }
+
         .main-sidebar {
             position: fixed !important;
             left: 0;
@@ -163,6 +174,24 @@
             overflow-y: auto;
             overflow-x: hidden;
             z-index: 1038;
+        }
+
+        @media (min-width: 768px) {
+            body.sidebar-mini.sidebar-collapse .main-sidebar,
+            body.sidebar-mini.sidebar-collapse .main-sidebar::before,
+            body.sidebar-mini.sidebar-collapse .main-sidebar:hover,
+            body.sidebar-mini.sidebar-collapse .main-sidebar:hover::before {
+                width: 4.6rem !important;
+            }
+
+            body.sidebar-mini.sidebar-collapse .main-sidebar:hover .brand-link {
+                width: 4.6rem !important;
+            }
+
+            body.sidebar-mini.sidebar-collapse .main-sidebar:hover .nav-sidebar .nav-link p,
+            body.sidebar-mini.sidebar-collapse .main-sidebar:hover .nav-sidebar .nav-header {
+                display: none !important;
+            }
         }
 
         .main-sidebar .nav-link,
@@ -352,23 +381,43 @@
             transform: translateY(-13px);
         }
 
+        .brand-link .brand-logo-collapsed {
+            display: none;
+            width: 3.2rem;
+            transform: translateY(4px);
+        }
+
+        body.sidebar-mini.sidebar-collapse .brand-link .brand-logo-expanded {
+            display: none;
+        }
+
+        body.sidebar-mini.sidebar-collapse .brand-link .brand-logo-collapsed {
+            display: block;
+        }
+
+        body.sidebar-mini.sidebar-collapse .brand-link::after {
+            bottom: -10px;
+        }
+
         .brand-link .brand-text {
             display: none;
         }
 
         .nav-sidebar .nav-link {
             color: rgba(244, 247, 250, 0.8);
-            transition: background-color 0.2s ease, color 0.2s ease;
+            transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
 
-        .nav-sidebar .nav-link:hover,
-        .nav-sidebar .nav-link.active {
-            background: rgba(239, 29, 47, 0.82) !important;
+        .nav-sidebar .nav-link:hover {
+            background: linear-gradient( to right, rgba(220, 26, 43, 0.984) 0%,  rgba(130, 10, 20, 0.82) 60%,rgba(35, 0, 4, 0.82) 100% ) !important;
             color: #ffffff !important;
         }
 
         .nav-sidebar .nav-link.active {
-            box-shadow: inset 3px 0 0 #ff6470;
+            border: 1px solid rgba(255, 53, 64, 0.95);
+            background: linear-gradient(90deg, #f20b18 0%, #b00813 42%, #5b050b 100%) !important;
+            box-shadow: inset 3px 0 0 #ff858b, 0 0 5px rgba(247, 0, 8, 0.9), 0 0 12px rgba(247, 0, 8, 0.42);
+            color: #ffffff !important;
         }
 
         .nav-header {
@@ -539,6 +588,33 @@
             color: rgba(255, 255, 255, 0.55);
         }
 
+        .content .custom-file {
+            height: calc(2.25rem + 2px);
+        }
+
+        .content .custom-file-label {
+            height: calc(2.25rem + 2px);
+            overflow: hidden;
+            border-color: var(--gazoo-border);
+            background-color: rgba(0, 0, 0, 0.32);
+            color: rgba(255, 255, 255, 0.72);
+            line-height: 1.5;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .content .custom-file-label::after {
+            height: 100%;
+            border-left-color: var(--gazoo-border);
+            background-color: rgba(5, 14, 23, 0.92);
+            color: #f4f7fa;
+        }
+
+        .content .custom-file-input:focus ~ .custom-file-label {
+            border-color: var(--gazoo-red);
+            box-shadow: 0 0 0 0.2rem rgba(239, 29, 47, 0.2);
+        }
+
         .content .form-control:focus,
         .content .custom-select:focus {
             border-color: var(--gazoo-red);
@@ -589,6 +665,161 @@
         }
     </style>
     @stack('styles')
+    <style>
+        @media (max-width: 991.98px) {
+            .main-sidebar {
+                width: 230px !important;
+                transform: translateX(-100%);
+                transition: transform 0.2s ease;
+            }
+
+            body.sidebar-open .main-sidebar {
+                transform: translateX(0);
+            }
+
+            .content-wrapper,
+            .main-footer {
+                margin-left: 0 !important;
+            }
+
+            .content-wrapper {
+                padding-top: 0;
+            }
+
+            .main-header {
+                left: 0 !important;
+                padding-right: 0.65rem;
+                padding-left: 0.65rem;
+            }
+
+            .topbar-brand {
+                margin-right: 0.4rem;
+                padding-right: 0.55rem;
+            }
+
+            .topbar-brand img {
+                width: 92px;
+            }
+
+            .topbar-user .nav-link {
+                min-width: 0;
+            }
+
+            .user-copy {
+                max-width: 105px;
+            }
+
+            .content-header {
+                padding: 0.75rem 0.75rem 0.35rem;
+            }
+
+            .content-header h1 {
+                font-size: 1.35rem;
+            }
+
+            .content {
+                padding: 0 0.75rem 1rem;
+            }
+
+            .content .container-fluid {
+                padding-right: 0;
+                padding-left: 0;
+            }
+
+            .content .card-header {
+                flex-wrap: wrap;
+                gap: 0.6rem;
+            }
+
+            .content .card-body {
+                overflow-x: auto;
+            }
+
+            .content .table {
+                min-width: 640px;
+            }
+
+            .content .table td,
+            .content .table th {
+                white-space: nowrap;
+            }
+
+            .content .form-row {
+                margin-right: 0;
+                margin-left: 0;
+            }
+
+            .content .form-row > [class*="col-"] {
+                padding-right: 0;
+                padding-left: 0;
+            }
+
+            .content .btn {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .main-header {
+                min-height: 50px;
+            }
+
+            .main-sidebar {
+                top: 50px !important;
+                height: calc(100vh - 50px) !important;
+            }
+
+            .content-wrapper {
+                margin-top: 50px !important;
+            }
+
+            .topbar-brand img {
+                width: 78px;
+            }
+
+            .topbar-user .nav-link {
+                gap: 0.3rem;
+                padding-right: 0.35rem !important;
+            }
+
+            .user-copy {
+                display: none;
+            }
+
+            .user-avatar {
+                width: 25px;
+                height: 25px;
+                flex-basis: 25px;
+            }
+
+            .content-header h1 {
+                font-size: 1.15rem;
+            }
+
+            .content .card-header,
+            .content .card-body,
+            .content .card-footer {
+                padding-right: 0.7rem;
+                padding-left: 0.7rem;
+            }
+
+            .content .small-box {
+                min-height: 100px;
+            }
+
+            .content .small-box .inner {
+                padding: 0.8rem 0.9rem;
+            }
+
+            .content .small-box h3 {
+                font-size: 1.55rem;
+            }
+
+            .content .small-box p {
+                font-size: 0.8rem;
+            }
+        }
+    </style>
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
@@ -598,18 +829,13 @@
         <a class="topbar-brand" href="{{ route('dashboard') }}" aria-label="Toyota Gazoo Racing">
             <img src="{{ asset('assets/images/Logo Toyota White.png') }}" alt="Toyota Gazoo Racing">
         </a>
-        <ul class="navbar-nav topbar-menu">
-            <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-            </li>
-        </ul>
         <ul class="navbar-nav ml-auto">
             <li class="nav-item dropdown topbar-user">
                 <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     <span class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                     <span class="user-copy">
                         <span class="user-name">{{ auth()->user()->name }}</span>
-                        <span class="user-role">{{ auth()->user()->role === 'admin_ho' ? 'Admin HO' : 'Staff Cabang' }}</span>
+                        <span class="user-role">{{ auth()->user()->role === 'admin_ho' ? 'Admininistrator' : 'Staff Cabang' }}</span>
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userMenu">
@@ -618,7 +844,7 @@
                         <small>{{ auth()->user()->email }}</small>
                     </div>
                     <div class="user-popup-body">
-                        <small><i class="fas fa-id-badge mr-1"></i> {{ auth()->user()->role === 'admin_ho' ? 'Admin HO' : 'Staff Cabang' }}</small>
+                        <small><i class="fas fa-id-badge mr-1"></i> {{ auth()->user()->role === 'admin_ho' ? 'Admininistrator' : 'Staff Cabang' }}</small>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -638,8 +864,9 @@
 
     <!-- Sidebar -->
     <aside class="main-sidebar sidebar-dark-primary elevation-4">
-        <a href="{{ route('dashboard') }}" class="brand-link">
-            <img src="{{ asset('assets/images/merchandise.png') }}" alt="GR merch">
+        <a class="nav-link brand-link" data-widget="pushmenu" href="#" role="button" aria-label="Toggle sidebar">
+            <img class="brand-logo-expanded" src="{{ asset('assets/images/merchandise.png') }}" alt="GR merch">
+            <img class="brand-logo-collapsed" src="{{ asset('assets/images/logo-gr-text.png') }}" alt="GR">
         </a>
 
         <div class="sidebar">
@@ -751,9 +978,9 @@
         </div>
     </div>
 
-    <footer class="main-footer">
+    {{-- <footer class="main-footer">
         <strong>&copy; {{ date('Y') }} PT TAG Toyota.</strong> GR_merch - Sistem Penjualan Merchandise GR.
-    </footer>
+    </footer> --}}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>

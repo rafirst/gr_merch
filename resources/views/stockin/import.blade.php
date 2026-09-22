@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Import Data Items')
+@section('title', 'Import Barang Masuk')
 
 @section('content')
 <div class="card import-card">
     <div class="card-header import-card-header">
-        <h3 class="card-title">Import Data Items</h3>
+        <h3 class="card-title">Import Barang Masuk</h3>
     </div>
     <div class="card-body import-card-body">
         <section class="import-step">
@@ -12,8 +12,8 @@
             <div class="import-step-content">
                 <h4>Siapkan File</h4>
                 <p>Gunakan format kolom berikut pada baris pertama (header):</p>
-                <div class="import-code-line">kode_items <span>|</span> nama_items <span>|</span> kategori <span>|</span> harga_items <span>|</span> harga_jual <span>|</span> kode_cabang</div>
-                <a href="{{ route('items.import.template') }}" class="btn btn-success import-template-button"><i class="fas fa-file-excel"></i> Download Template</a>
+                <div class="import-code-line">kode_items <span>|</span> jumlah <span>|</span> kode_cabang <span>|</span> sumber</div>
+                <a href="{{ route('stockin.import.template') }}" class="btn btn-success import-template-button"><i class="fas fa-file-excel"></i> Download Template</a>
             </div>
         </section>
 
@@ -21,7 +21,7 @@
             <div class="import-step-number">02</div>
             <div class="import-step-content">
                 <h4>Perhatikan Kode Cabang</h4>
-                <p>Gunakan kode cabang sesuai dengan tujuan data yang akan diimport.</p>
+                <p>Gunakan kode cabang sesuai dengan tujuan barang masuk.</p>
                 <div class="branch-code-list">
                     <div class="branch-code"><strong>1</strong><span>THO</span></div>
                     <div class="branch-code"><strong>2</strong><span>PLG</span></div>
@@ -30,7 +30,7 @@
                     <div class="branch-code"><strong>5</strong><span>PRB</span></div>
                     <div class="branch-code"><strong>6</strong><span>POL</span></div>
                 </div>
-                <div class="import-note"><i class="fas fa-info-circle"></i> Jika kode_items tersedia, datanya akan diperbarui. Jika belum tersedia, item baru dibuat dengan stok awal 0.</div>
+                <div class="import-note"><i class="fas fa-info-circle"></i> Kode item harus sudah terdaftar pada cabang tujuan. Tanggal barang masuk akan diisi otomatis hari ini.</div>
             </div>
         </section>
 
@@ -39,28 +39,28 @@
             <div class="import-step-content">
                 <h4>Upload File</h4>
                 <p>Pilih file Excel atau CSV yang ingin diimport.</p>
-                <form action="{{ route('items.import') }}" method="POST" enctype="multipart/form-data" class="import-form">
+                <form action="{{ route('stockin.import') }}" method="POST" enctype="multipart/form-data" class="import-form">
                     @csrf
                     <div class="import-upload-layout">
-                        <label class="import-dropzone" for="import-file">
+                        <label class="import-dropzone" for="stockin-import-file">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <strong>Drag &amp; drop file di sini</strong>
                             <span>atau</span>
                             <span class="import-browse-label">Pilih File</span>
                             <small>Format: .xlsx / .xls / .csv</small>
                         </label>
-                        <input type="file" name="file" id="import-file" class="import-file-input" accept=".xlsx,.xls,.csv" required>
-                        <div class="import-selected-file" id="import-selected-file">
+                        <input type="file" name="file" id="stockin-import-file" class="import-file-input" accept=".xlsx,.xls,.csv" required>
+                        <div class="import-selected-file">
                             <i class="fas fa-file-excel"></i>
                             <div>
-                                <strong id="import-file-name">Belum ada file dipilih</strong>
-                                <span id="import-file-status">File siap diupload</span>
+                                <strong id="stockin-file-name">Belum ada file dipilih</strong>
+                                <span id="stockin-file-status">File siap diupload</span>
                             </div>
                             <i class="fas fa-check import-file-check"></i>
                         </div>
                     </div>
                     <div class="import-actions">
-                        <a href="{{ route('items.index') }}" class="btn btn-secondary">Batal</a>
+                        <a href="{{ route('stockin.index') }}" class="btn btn-secondary">Batal</a>
                         <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Import Data</button>
                     </div>
                 </form>
@@ -332,9 +332,9 @@
 
 @push('scripts')
 <script>
-    document.getElementById('import-file')?.addEventListener('change', function () {
-        const fileName = document.getElementById('import-file-name');
-        const fileStatus = document.getElementById('import-file-status');
+    document.getElementById('stockin-import-file')?.addEventListener('change', function () {
+        const fileName = document.getElementById('stockin-file-name');
+        const fileStatus = document.getElementById('stockin-file-status');
         const fileCheck = document.querySelector('.import-file-check');
 
         if (this.files[0]) {

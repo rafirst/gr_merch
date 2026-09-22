@@ -11,16 +11,17 @@ class Item extends Model
 
     public static function kategoriOptions(): array
     {
-        return ['jacket', 'cap', 't-shirt', 'shirt', 'tumbler', 'umbrella'];
+        return ['jacket', 't-shirt', 'shirt', 'tumbler', 'umbrella', 'topi'];
     }
 
     protected $fillable = [
         'kode_items', 'nama_items', 'kategori', 'harga_items',
-        'stok_items', 'stok_minimum', 'satuan', 'foto', 'cabang_id',
+        'stok_items', 'harga_jual', 'foto', 'cabang_id',
     ];
 
     protected $casts = [
         'harga_items' => 'decimal:2',
+        'harga_jual' => 'decimal:2',
     ];
 
     public function cabang()
@@ -40,6 +41,6 @@ class Item extends Model
 
     public function isStokMenipis(): bool
     {
-        return $this->stok_items <= $this->stok_minimum;
+        return $this->stok_items <= 5; // Assuming a default minimum stock of 5
     }
 }

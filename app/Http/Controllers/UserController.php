@@ -24,6 +24,13 @@ class UserController extends Controller
         return view('users.create', compact('cabangs'));
     }
 
+    public function show(User $user)
+    {
+        $user->load('cabang');
+
+        return view('users.show', compact('user'));
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
