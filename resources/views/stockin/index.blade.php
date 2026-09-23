@@ -35,20 +35,19 @@
                         <td>{{ $item->cabang->nama_cabang ?? '-' }}</td>
                         <td><span class="badge {{ $item->isStokMenipis() ? 'badge-warning' : 'badge-success' }} stockin-quantity-badge">{{ $item->stok_items }}</span></td>
                         <td class="text-center stockin-actions-cell">
-                            <a href="{{ route('stockin.show', $item) }}" class="btn btn-sm stockin-action-button stockin-view-button" title="Lihat item" aria-label="Lihat detail item">
+                            <a href="{{ route('stockin.show', $item->latestStockIn) }}" class="btn btn-sm stockin-action-button stockin-view-button" title="Lihat item" aria-label="Lihat detail item">
                                 <i class="fas fa-eye"></i>
                             </a>
-                                <a href="{{ route('stockin.edit', $item) }}" class="btn btn-sm stockin-action-button stockin-edit-button" title="Edit item" aria-label="Edit item">
-                                    <i class="fas fa-pen"></i>
-                                </a>
-                                <form action="{{ route('stockin.destroy', $item) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus item ini? Seluruh data terkait item juga dapat terhapus.');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm stockin-action-button stockin-delete-button" title="Hapus item" aria-label="Hapus item">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
+                            <a href="{{ route('stockin.edit', $item->latestStockIn) }}" class="btn btn-sm stockin-action-button stockin-edit-button" title="Edit barang masuk" aria-label="Edit barang masuk">
+                                <i class="fas fa-pen"></i>
                             </a>
+                            <form action="{{ route('stockin.destroy', $item->latestStockIn) }}" method="POST" class="d-inline stockin-delete-form" data-item="{{ $item->nama_items }}">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm stockin-action-button stockin-delete-button" title="Hapus barang masuk" aria-label="Hapus barang masuk">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty
@@ -60,6 +59,20 @@
     <div class="card-footer">{{ $items->links() }}</div>
 </div>
 @endsection
+
+<div class="stockin-confirm-modal" id="stockinConfirmModal" aria-hidden="true">
+    <div class="stockin-confirm-backdrop" data-stockin-confirm-cancel></div>
+    <section class="stockin-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="stockinConfirmTitle">
+        <div class="stockin-confirm-icon"><i class="fas fa-trash-alt"></i></div>
+        <span class="stockin-confirm-kicker">Barang Masuk</span>
+        <h3 id="stockinConfirmTitle">Hapus transaksi?</h3>
+        <p id="stockinConfirmMessage"></p>
+        <div class="stockin-confirm-actions">
+            <button type="button" class="stockin-confirm-cancel" data-stockin-confirm-cancel>Batal</button>
+            <button type="button" class="stockin-confirm-submit" id="stockinConfirmSubmit"><i class="fas fa-trash-alt"></i> Ya, Hapus</button>
+        </div>
+    </section>
+</div>
 
 @push('styles')
 <style>
@@ -269,14 +282,18 @@
 
     .stockin-action-button {
         position: relative;
+        display: inline-flex;
         overflow: hidden;
         width: 31px;
         height: 31px;
+        align-items: center;
+        justify-content: center;
         margin: 0 0.1rem;
         padding: 0;
         border: 1px solid rgba(255, 255, 255, 0.24) !important;
         color: #ffffff !important;
-        line-height: 29px;
+        line-height: 1;
+        vertical-align: middle;
     }
 
     .stockin-action-button::before {
@@ -310,6 +327,119 @@
         background: linear-gradient(180deg, #ff6570 0%, #dc2638 48%, #8d0d1d 100%) !important;
     }
 
+    .stockin-confirm-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: grid;
+        visibility: hidden;
+        place-items: center;
+        opacity: 0;
+        transition: opacity 0.22s ease, visibility 0.22s ease;
+    }
+
+    .stockin-confirm-modal.is-visible {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .stockin-confirm-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 4, 9, 0.8);
+        backdrop-filter: blur(4px);
+    }
+
+    .stockin-confirm-dialog {
+        position: relative;
+        width: min(430px, calc(100% - 2rem));
+        padding: 2.2rem 1.5rem 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-top: 3px solid #ed3348;
+        border-radius: 8px;
+        background: linear-gradient(145deg, #172532, #050c14 72%);
+        box-shadow: 0 20px 55px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        text-align: center;
+        transform: translateY(18px) scale(0.94);
+        transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .stockin-confirm-modal.is-visible .stockin-confirm-dialog {
+        transform: translateY(0) scale(1);
+    }
+
+    .stockin-confirm-icon {
+        display: grid;
+        width: 60px;
+        height: 60px;
+        margin: -3.95rem auto 0.8rem;
+        place-items: center;
+        border: 3px solid #172532;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #ff7180, #b6122b);
+        box-shadow: 0 5px 16px rgba(182, 18, 43, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.48);
+        color: #ffffff;
+        font-size: 1.35rem;
+        animation: stockin-confirm-pulse 1.8s ease-in-out infinite;
+    }
+
+    .stockin-confirm-kicker {
+        display: block;
+        color: #ff6570;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .stockin-confirm-dialog h3 {
+        margin: 0.35rem 0 0.55rem;
+        color: #ffffff;
+        font-size: 1.3rem;
+    }
+
+    .stockin-confirm-dialog p {
+        min-height: 2.8rem;
+        margin-bottom: 1.35rem;
+        color: rgba(244, 247, 250, 0.72);
+    }
+
+    .stockin-confirm-actions {
+        display: flex;
+        justify-content: center;
+        gap: 0.6rem;
+    }
+
+    .stockin-confirm-actions button {
+        min-width: 112px;
+        padding: 0.58rem 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 4px;
+        font-weight: 700;
+        transition: filter 0.18s ease, transform 0.18s ease;
+    }
+
+    .stockin-confirm-actions button:hover,
+    .stockin-confirm-actions button:focus {
+        filter: brightness(1.12);
+        transform: translateY(-1px);
+    }
+
+    .stockin-confirm-cancel {
+        background: linear-gradient(145deg, #aeb9c4, #465563);
+        color: #ffffff;
+    }
+
+    .stockin-confirm-submit {
+        background: linear-gradient(145deg, #ff6570, #8d0d1d);
+        color: #ffffff;
+    }
+
+    @keyframes stockin-confirm-pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.06); }
+    }
+
     @media (max-width: 767.98px) {
         .stockin-card-header {
             flex-wrap: wrap;
@@ -332,4 +462,48 @@
         }
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('stockinConfirmModal');
+        const message = document.getElementById('stockinConfirmMessage');
+        const submitButton = document.getElementById('stockinConfirmSubmit');
+        let activeForm = null;
+
+        function closeModal() {
+            modal.classList.remove('is-visible');
+            modal.setAttribute('aria-hidden', 'true');
+            activeForm = null;
+        }
+
+        document.querySelectorAll('.stockin-delete-form').forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                activeForm = form;
+                message.textContent = 'Hapus transaksi barang masuk terbaru untuk item "' + form.dataset.item + '"?';
+                modal.classList.add('is-visible');
+                modal.setAttribute('aria-hidden', 'false');
+                submitButton.focus();
+            });
+        });
+
+        submitButton.addEventListener('click', function () {
+            if (activeForm) {
+                activeForm.submit();
+            }
+        });
+
+        modal.querySelectorAll('[data-stockin-confirm-cancel]').forEach(function (element) {
+            element.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+                closeModal();
+            }
+        });
+    });
+</script>
 @endpush

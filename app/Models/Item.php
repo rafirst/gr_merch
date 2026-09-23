@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Item extends Model
 {
@@ -32,6 +33,11 @@ class Item extends Model
     public function stockIns()
     {
         return $this->hasMany(StockIn::class);
+    }
+
+    public function latestStockIn(): HasOne
+    {
+        return $this->hasOne(StockIn::class)->latestOfMany();
     }
 
     public function stockOuts()

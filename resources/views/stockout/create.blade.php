@@ -6,7 +6,6 @@
     <div class="card-body">
         <form action="{{ route('stockout.store') }}" method="POST">
             @csrf
-
             <div class="form-row">
                 <div class="form-group col-md-3">
                     <label>Jenis Keluar</label>
@@ -146,7 +145,7 @@
         <div class="stockout-preview-footer">
             <div class="stockout-preview-totals">
                 <div><span>Subtotal</span><strong id="previewSubtotal">Rp 0</strong></div>
-                <div><span>Potongan</span><strong id="previewDiscountAmount">Rp 0</strong></div>
+                <div><span id="previewDiscountLabel">Potongan (0%)</span><strong id="previewDiscountAmount">Rp 0</strong></div>
                 <div id="previewChangeWrap" hidden><span>Kembalian</span><strong id="previewChange">Rp 0</strong></div>
                 <div class="preview-grand-total"><span>Total Keseluruhan</span><strong id="previewTotal">Rp 0</strong></div>
             </div>
@@ -640,6 +639,7 @@
         nomorSpk: document.getElementById('previewNomorSpk'),
         tanggal: document.getElementById('previewTanggal'),
         subtotal: document.getElementById('previewSubtotal'),
+        discountLabel: document.getElementById('previewDiscountLabel'),
         discountAmount: document.getElementById('previewDiscountAmount'),
         change: document.getElementById('previewChange'),
         total: document.getElementById('previewTotal'),
@@ -695,6 +695,7 @@
         } else if (isDo) {
             salesOnlyFields.forEach((field) => field.style.display = 'none');
             discountWrap.style.display = 'none';
+            discountInput.value = '';
             discountInput.disabled = true;
             discountInput.required = false;
             infoBox.innerHTML = '<i class="fas fa-check-circle"></i> Transaksi <strong>DO</strong> akan langsung tercatat & mengurangi stok tanpa approval.';
@@ -702,6 +703,7 @@
         } else if (isRequest) {
             salesOnlyFields.forEach((field) => field.style.display = 'none');
             discountWrap.style.display = 'none';
+            discountInput.value = '';
             discountInput.disabled = true;
             discountInput.required = false;
             infoBox.innerHTML = '<i class="fas fa-clock"></i> Transaksi <strong>' + jenisSelect.options[jenisSelect.selectedIndex].text + '</strong> memerlukan approval Admin Pusat sebelum stok dipotong.';
@@ -713,8 +715,7 @@
     function calculateRowTotal(row) {
         const jumlah = parseFloat(row.querySelector('.quantity-input').value) || 0;
         const harga = parseFloat(row.querySelector('.price-input').value) || 0;
-        const discount = discountRates[discountInput.value] || 0;
-        const total = harga * jumlah * (1 - discount / 100);
+        const total = harga * jumlah;
         row.querySelector('.total-input').value = total.toFixed(2);
         row.querySelector('.total-display').value = formatInputCurrency(total);
     }
@@ -749,7 +750,7 @@
             const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
             const price = parseFloat(row.querySelector('.price-input').value) || 0;
             const rowSubtotal = price * quantity;
-            const rowTotal = rowSubtotal * (1 - discount / 100);
+            const rowTotal = rowSubtotal;
 
             if (!itemId.value) {
                 return;
@@ -780,7 +781,7 @@
             tableRow.append(itemCell, quantityCell, priceCell, totalCell);
             previewItems.appendChild(tableRow);
             subtotal += rowSubtotal;
-            total += rowTotal;
+            total += rowSubtotal * (1 - discount / 100);
             itemCount++;
         });
 
@@ -792,13 +793,17 @@
         const totalAfterVoucher = jenisSelect.value === 'DO'
             ? Math.max(0, subtotal - voucherAmount)
             : total;
-        previewChangeWrap.hidden = jenisSelect.value !== 'DO';
+        const discountLabel = jenisSelect.value === 'DO'
+            ? 'Potongan (' + formatCurrency(voucherAmount) + ')'
+            : 'Potongan (' + discount + '%)';
+        previewChangeWrap.hidden = true;
 
         setPreviewText(previewElements.subtotal, formatCurrency(subtotal));
+        setPreviewText(previewElements.discountLabel, discountLabel);
         setPreviewText(previewElements.discountAmount, formatCurrency(jenisSelect.value === 'DO' ? voucherAmount : subtotal - total));
         setPreviewText(previewElements.change, formatCurrency(changeAmount));
         setPreviewText(previewElements.total, formatCurrency(totalAfterVoucher));
-    }
+    }   
 
     function updateRemoveButtons() {
         const rows = document.querySelectorAll('.item-row');

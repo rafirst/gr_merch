@@ -63,6 +63,7 @@ class ItemController extends Controller
         $user = Auth::user();
         $request->merge([
             'harga_items' => $this->normalizeHarga($request->input('harga_items')),
+            'harga_jual' => $this->normalizeHarga($request->input('harga_jual')),
         ]);
 
         $data = $request->validate([
@@ -108,6 +109,7 @@ class ItemController extends Controller
         $user = Auth::user();
         $request->merge([
             'harga_items' => $this->normalizeHarga($request->input('harga_items')),
+            'harga_jual' => $this->normalizeHarga($request->input('harga_jual')),
         ]);
 
         $data = $request->validate([
@@ -163,6 +165,14 @@ class ItemController extends Controller
 
         if (str_contains($harga, ',')) {
             return str_replace(',', '.', str_replace('.', '', $harga));
+        }
+
+        if (substr_count($harga, '.') === 1) {
+            [$whole, $fraction] = explode('.', $harga, 2);
+
+            if (strlen($fraction) < 3) {
+                return $harga;
+            }
         }
 
         return str_replace('.', '', $harga);

@@ -72,12 +72,17 @@
         <div class="row stock-filter-row">
             <div class="col-md-5 form-group">
                 <label for="stockBranchFilter">Cabang</label>
-                <select id="stockBranchFilter" class="form-control">
-                    <option value="">Semua Cabang</option>
-                    @foreach($cabangs as $cabang)
-                        <option value="{{ $cabang->id }}">{{ $cabang->nama_cabang }}</option>
-                    @endforeach
-                </select>
+                @if($isAdmin)
+                    <select id="stockBranchFilter" class="form-control">
+                        <option value="">Semua Cabang</option>
+                        @foreach($cabangs as $cabang)
+                            <option value="{{ $cabang->id }}">{{ $cabang->nama_cabang }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="text" class="form-control" value="{{ auth()->user()->cabang->nama_cabang ?? '-' }}" readonly aria-readonly="true">
+                    <input type="hidden" id="stockBranchFilter" value="{{ auth()->user()->cabang_id }}">
+                @endif
             </div>  
             <div class="col-md-7 form-group">
                 <label for="stockItemFilter">Cari Item</label>

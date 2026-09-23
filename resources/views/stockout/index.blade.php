@@ -4,7 +4,8 @@
 @section('content')
 <div class="card">
     <div class="card-header stockout-card-header">
-        <form class="form-inline" method="GET">
+        <form class="form-inline stockout-filter-form" method="GET">
+            <input type="text" name="search" class="form-control" placeholder="Cari customer/item" value="{{ request('search') }}">
             <select name="jenis" class="form-control mr-2" onchange="this.form.submit()">
                 <option value="">Semua Jenis</option>
                 <option value="penjualan" {{ request('jenis') == 'penjualan' ? 'selected' : '' }}>Penjualan</option>
@@ -17,6 +18,8 @@
                 <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                 <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
             </select>
+            <button type="submit" class="btn stockout-filter-button" title="Cari transaksi" aria-label="Cari transaksi"><i class="fas fa-search"></i></button>
+            <a href="{{ route('stockout.index') }}" class="btn stockout-reset-button" title="Reset filter" aria-label="Reset filter"><i class="fas fa-undo-alt"></i></a>
         </form>
         <a href="{{ route('stockout.create') }}" class="btn stockout-create-button"><i class="fas fa-plus"></i> Items</a>
     </div>
@@ -76,6 +79,50 @@
 
     .stockout-card-header form {
         margin-bottom: 0;
+    }
+
+    .stockout-filter-form {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+    }
+
+    .stockout-filter-form input {
+        width: 340px;
+        min-width: 330px;
+    }
+
+    .stockout-filter-form select {
+        width: 203px;
+        min-width: 203px;
+        flex: 0 0 203px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+
+    .stockout-filter-form .form-control {
+        margin-right: 0 !important;
+    }
+
+    .stockout-filter-button,
+    .stockout-reset-button {
+        display: inline-flex;
+        width: 38px;
+        height: 38px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+        border-radius: 4px;
+        color: #ffffff !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58), 0 4px 9px rgba(0, 0, 0, 0.28);
+    }
+
+    .stockout-filter-button,
+    .stockout-reset-button {
+        background: linear-gradient(145deg, #aeb9c4 0%, #687887 48%, #465563 100%);
     }
 
     .stockout-card-header .stockout-create-button {
@@ -164,6 +211,26 @@
         color: #ffffff;
         font-size: 0.72rem;
         font-weight: 700;
+    }
+
+    @media (max-width: 767.98px) {
+        .stockout-card-header {
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .stockout-filter-form {
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .stockout-filter-form input {
+            flex: 1 1 180px;
+        }
+
+        .stockout-card-header .stockout-create-button {
+            margin-left: 0;
+        }
     }
 </style>
 @endpush

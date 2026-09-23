@@ -18,7 +18,8 @@ class StockInController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $query = Item::with('cabang');
+        $query = Item::with(['cabang', 'latestStockIn'])
+            ->whereHas('stockIns');
 
         if (! $user->isAdminHo()) {
             $query->where('cabang_id', $user->cabang_id);

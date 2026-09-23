@@ -29,6 +29,16 @@ class StockOutController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($searchQuery) use ($search): void {
+                $searchQuery->where('nama_customer', 'like', "%{$search}%")
+                    ->orWhereHas('item', function ($itemQuery) use ($search): void {
+                        $itemQuery->where('nama_items', 'like', "%{$search}%")
+                            ->orWhere('kode_items', 'like', "%{$search}%");
+                    });
+            });
+        }
 
         $groupedStockOuts = $query->latest('tanggal')->get()
             ->groupBy(fn (StockOut $stockOut): string => $stockOut->batch_id ?: 'single-'.$stockOut->id)
