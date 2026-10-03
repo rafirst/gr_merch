@@ -66,7 +66,7 @@
                             <input type="text" class="form-control item-search-input" placeholder="Ketik kode atau nama item..." autocomplete="off" required>
                             <div class="item-options" role="listbox">
                                 @foreach($items as $i)
-                                    <button type="button" class="item-option" data-item-id="{{ $i->id }}" data-item-name="{{ $i->nama_items }}" data-harga="{{ $i->harga_items }}" data-harga-jual="{{ $i->harga_jual }}" data-search="{{ strtolower($i->kode_items.' '.$i->nama_items.' '.($i->cabang->nama_cabang ?? '')) }}" role="option">
+                                    <button type="button" class="item-option" data-item-id="{{ $i->id }}" data-item-name="{{ $i->nama_items }}" data-harga="{{ $i->harga_items }}" data-harga-jual="{{ $i->harga_jual ?? $i->harga_items }}" data-item-code="{{ $i->kode_items }}">
                                         <span class="item-option-main">
                                             <strong>{{ $i->nama_items }}</strong>
                                             <small>{{ $i->kode_items }} · {{ $i->cabang->nama_cabang ?? '-' }}</small>
@@ -115,6 +115,13 @@
                         <option value="qris" @selected(old('jenis_pembayaran') === 'qris')>QRIS</option>
                         <option value="transfer" @selected(old('jenis_pembayaran') === 'transfer')>Transfer</option>
                     </select>
+                </div>
+                <div class="form-group col-md-3" id="bankTransferInfoWrap" hidden>
+                    <label>Rekening Pembayaran</label>
+                    <div class="bank-transfer-info">
+                        <strong>0216198888</strong>
+                        <span>BCA</span>
+                    </div>
                 </div>
                 <div class="form-group col-md-3">
                     <label>Tanggal</label>
@@ -542,6 +549,28 @@
         font-size: 0.76rem;
     }
 
+    .bank-transfer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.7rem 0.75rem;
+        border: 1px solid rgba(105, 143, 176, 0.4);
+        border-radius: 0.4rem;
+        background: rgba(10, 98, 107, 0.12);
+        color: #f4f7fa;
+    }
+
+    .bank-transfer-info strong {
+        font-size: 0.95rem;
+        color: #ffffff;
+    }
+
+    .bank-transfer-info span {
+        color: rgba(244, 247, 250, 0.75);
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
     @media (max-width: 767.98px) {
         .stockout-form-card .card-body {
             padding: 0.9rem;
@@ -847,6 +876,7 @@
 <script>
     const jenisSelect = document.getElementById('jenis');
     const jenisPembayaranSelect = document.getElementById('jenisPembayaran');
+    const bankTransferInfoWrap = document.getElementById('bankTransferInfoWrap');
     const discountWrap = document.getElementById('discountWrap');
     const discountInput = document.getElementById('discount');
     const paketBundlingWrap = document.getElementById('paketBundlingWrap');
@@ -896,6 +926,14 @@
         if (element) {
             element.textContent = value || '-';
         }
+    }
+
+    function togglePaymentMethodInfo() {
+        if (!jenisPembayaranSelect || !bankTransferInfoWrap) {
+            return;
+        }
+
+        bankTransferInfoWrap.hidden = jenisPembayaranSelect.value !== 'transfer';
     }
 
     function toggleJenis() {
@@ -998,171 +1036,60 @@
             const itemCode = document.createElement('small');
             itemName.className = 'preview-item-name';
             itemCode.className = 'preview-item-code';
-            itemName.textContent = itemSearch.value;
-            itemCode.textContent = itemId.dataset.itemCode || '';
-            itemCell.append(itemName, itemCode);
+            itemName.textContent = itemSearch.value || 'Item terpilih';
+            itemCode.textContent = itemSearch.dataset.itemCode || 'Kode item';
+            itemCell.appendChild(itemName);
+            itemCell.appendChild(itemCode);
 
-            const quantityCell = document.createElement('td');
-            quantityCell.className = 'text-right';
-            quantityCell.textContent = quantity || '-';
+            const qtyCell = document.createElement('td');
+            qtyCell.className = 'text-right';
+            qtyCell.textContent = quantity;
 
             const priceCell = document.createElement('td');
             priceCell.className = 'text-right';
-            priceCell.textContent = price ? formatCurrency(price) : '-';
+            priceCell.textContent = formatCurrency(price);
 
             const totalCell = document.createElement('td');
             totalCell.className = 'text-right';
-            totalCell.textContent = rowTotal ? formatCurrency(rowTotal) : '-';
+            totalCell.textContent = formatCurrency(rowTotal);
 
-            const tableRow = document.createElement('tr');
-            tableRow.append(itemCell, quantityCell, priceCell, totalCell);
-            previewItems.appendChild(tableRow);
+            const tr = document.createElement('tr');
+            tr.appendChild(itemCell);
+            tr.appendChild(qtyCell);
+            tr.appendChild(priceCell);
+            tr.appendChild(totalCell);
+            previewItems.appendChild(tr);
+
             subtotal += rowSubtotal;
-            total += rowSubtotal * (1 - discount / 100);
-            itemCount++;
+            itemCount += 1;
         });
 
         if (!itemCount) {
             previewItems.innerHTML = '<tr><td colspan="4" class="preview-empty"><i class="fas fa-box-open"></i><span>Pilih item untuk melihat detail transaksi.</span></td></tr>';
         }
 
-        const hasTransactionTotal = ['penjualan', 'DO'].includes(jenisSelect.value);
-        const ppnAmount = hasTransactionTotal ? Math.round(subtotal * 0.11) : 0;
-        const subtotalWithPpn = subtotal + ppnAmount;
-        const totalAfterDiscount = jenisSelect.value === 'DO'
-            ? subtotalWithPpn
-            : total + ppnAmount;
-        const discountLabel = jenisSelect.value === 'DO'
-            ? 'Potongan (0%)'
-            : 'Potongan (' + discount + '%)';
-        document.getElementById('previewPpnRow').hidden = !hasTransactionTotal;
+        const discountAmount = subtotal * (discount / 100);
+        const ppn = subtotal * 0.11;
+        total = subtotal - discountAmount + ppn;
 
-        setPreviewText(previewElements.subtotal, formatCurrency(subtotal));
-        setPreviewText(previewElements.ppnAmount, formatCurrency(ppnAmount));
-        setPreviewText(previewElements.discountLabel, discountLabel);
-        setPreviewText(previewElements.discountAmount, formatCurrency(jenisSelect.value === 'DO' ? 0 : subtotal - total));
-        setPreviewText(previewElements.total, formatCurrency(totalAfterDiscount));
-    }   
-
-    function updateRemoveButtons() {
-        const rows = document.querySelectorAll('.item-row');
-        rows.forEach((row) => {
-            row.querySelector('.remove-item').disabled = rows.length === 1;
-        });
+        previewElements.subtotal.textContent = formatCurrency(subtotal);
+        previewElements.discountLabel.textContent = 'Potongan (' + discount + '%)';
+        previewElements.discountAmount.textContent = formatCurrency(discountAmount);
+        previewElements.ppnAmount.textContent = formatCurrency(ppn);
+        previewElements.total.textContent = formatCurrency(total);
     }
 
-    function filterItems(row) {
-        const searchInput = row.querySelector('.item-search-input');
-        const options = Array.from(row.querySelectorAll('.item-option'));
-        const noResults = row.querySelector('.item-no-results');
-        const query = searchInput.value.trim().toLowerCase();
-        let visibleItems = 0;
-
-        options.forEach((option) => {
-            const isVisible = !query || option.dataset.search.includes(query);
-            option.hidden = !isVisible;
-            visibleItems += isVisible ? 1 : 0;
-        });
-
-        noResults.hidden = visibleItems > 0;
-        row.querySelector('.item-options').classList.add('is-open');
+    if (jenisSelect) {
+        jenisSelect.addEventListener('change', toggleJenis);
     }
 
-    function selectItem(option) {
-        const row = option.closest('.item-row');
-        const searchInput = row.querySelector('.item-search-input');
-        const itemId = row.querySelector('.item-id-input');
-        const priceInput = row.querySelector('.price-input');
-
-        searchInput.value = option.dataset.itemName;
-        itemId.value = option.dataset.itemId;
-        itemId.dataset.itemCode = option.querySelector('small').textContent.split(' · ')[0];
-        searchInput.setCustomValidity('');
-        priceInput.value = option.dataset.harga || '';
-        row.querySelector('.price-display').value = formatInputCurrency(priceInput.value);
-        row.querySelector('.item-options').classList.remove('is-open');
-        calculateRowTotal(row);
-        renderPreview();
+    if (jenisPembayaranSelect) {
+        jenisPembayaranSelect.addEventListener('change', togglePaymentMethodInfo);
     }
 
-    itemRows.addEventListener('input', function (event) {
-        if (event.target.classList.contains('item-search-input')) {
-            const row = event.target.closest('.item-row');
-            row.querySelector('.item-id-input').value = '';
-            row.querySelector('.item-id-input').dataset.itemCode = '';
-            event.target.setCustomValidity('Pilih item dari daftar yang tersedia.');
-            filterItems(row);
-        }
-
-        if (event.target.classList.contains('quantity-input') || event.target.classList.contains('price-input')) {
-            calculateRowTotal(event.target.closest('.item-row'));
-            renderPreview();
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleJenis();
+        togglePaymentMethodInfo();
     });
-
-    itemRows.addEventListener('focusin', function (event) {
-        if (event.target.classList.contains('item-search-input')) {
-            filterItems(event.target.closest('.item-row'));
-        }
-    });
-
-    itemRows.addEventListener('click', function (event) {
-        const itemOption = event.target.closest('.item-option');
-        if (itemOption) {
-            selectItem(itemOption);
-            return;
-        }
-
-        const removeButton = event.target.closest('.remove-item');
-        if (!removeButton) {
-            return;
-        }
-
-        removeButton.closest('.item-row').remove();
-        updateRemoveButtons();
-        renderPreview();
-    });
-
-    document.addEventListener('click', function (event) {
-        if (!event.target.closest('.stockout-item-search-wrapper')) {
-            document.querySelectorAll('.stockout-item-search-wrapper .item-options').forEach((options) => options.classList.remove('is-open'));
-        }
-    });
-
-    addItemButton.addEventListener('click', function () {
-        const newRow = itemRows.querySelector('.item-row').cloneNode(true);
-        newRow.querySelector('.item-search-input').value = '';
-        newRow.querySelector('.item-id-input').value = '';
-        newRow.querySelector('.item-id-input').dataset.itemCode = '';
-        newRow.querySelector('.quantity-input').value = '';
-        newRow.querySelector('.price-input').value = '';
-        newRow.querySelector('.price-display').value = '';
-        newRow.querySelector('.total-input').value = '0.00';
-        newRow.querySelector('.total-display').value = '';
-        newRow.querySelectorAll('.item-option').forEach((option) => {
-            option.hidden = false;
-        });
-        newRow.querySelector('.item-no-results').hidden = true;
-        newRow.querySelector('.item-options').classList.remove('is-open');
-        itemRows.appendChild(newRow);
-        updateRemoveButtons();
-        renderPreview();
-    });
-
-    discountInput.addEventListener('change', toggleJenis);
-    jenisPembayaranSelect.addEventListener('change', renderPreview);
-    paketBundlingInput.addEventListener('change', renderPreview);
-    jenisSelect.addEventListener('change', toggleJenis);
-    nomorTeleponInput.addEventListener('input', function () {
-        this.value = this.value.replace(/\D/g, '');
-        renderPreview();
-    });
-    document.querySelectorAll('[name="nama_customer"], [name="pic_penjualan"], [name="nomor_telepon"], [name="nomor_spk"], [name="nomor_im"], [name="keterangan"]').forEach((input) => {
-        input.addEventListener('input', renderPreview);
-    });
-    document.querySelector('[name="tanggal"]').addEventListener('change', renderPreview);
-    updateRemoveButtons();
-    toggleJenis();
 </script>
 @endpush
-
