@@ -9,7 +9,7 @@
         </a>
     </div>
     <div class="col-lg-4 col-6">
-        <a href="{{ route('stockin.index') }}" class="small-box total-stock-box dashboard-link-box" title="Buka Data Stock Masuk">
+        <a href="{{ $isAdmin ? route('stockin.index') : route('items.index') }}" class="small-box total-stock-box dashboard-link-box" title="{{ $isAdmin ? 'Buka Data Stock Masuk' : 'Buka Data Items' }}">
             <div class="inner">
                 <h3>{{ $totalStok }}</h3>
                 <p>Total Stok</p>
@@ -70,22 +70,8 @@
         </div>
     <div class="card-body">
         <div class="row stock-filter-row">
-            <div class="col-md-5 form-group">
-                <label for="stockBranchFilter">Cabang</label>
-                @if($isAdmin)
-                    <select id="stockBranchFilter" class="form-control">
-                        <option value="">Semua Cabang</option>
-                        @foreach($cabangs as $cabang)
-                            <option value="{{ $cabang->id }}">{{ $cabang->nama_cabang }}</option>
-                        @endforeach
-                    </select>
-                @else
-                    <input type="text" class="form-control" value="{{ auth()->user()->cabang->nama_cabang ?? '-' }}" readonly aria-readonly="true">
-                    <input type="hidden" id="stockBranchFilter" value="{{ auth()->user()->cabang_id }}">
-                @endif
-            </div>  
-            <div class="col-md-7 form-group">
-                <label for="stockItemFilter">Cari Item</label>
+            <div class="col-12 form-group">
+                <label for="stockItemFilter">Cari item</label>
                 <div class="stock-search-input">
                     <i class="fas fa-search"></i>
                     <input type="search" id="stockItemFilter" class="form-control" placeholder="Cari kode atau nama item..." autocomplete="off">
@@ -96,29 +82,29 @@
             <table class="table stock-check-table">
                 <colgroup>
                     <col class="stock-column-item">
-                    <col class="stock-column-branch">
+                    <col class="stock-column-code">
                     <col class="stock-column-quantity">
                     <col class="stock-column-action">
                 </colgroup>
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th>Cabang</th>
+                        <th>Kode</th>
                         <th class="text-right">Stok</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="stockCheckRows">
-                    @forelse($stockItems as $item)
-                        <tr class="stock-check-row" data-branch="{{ $item->cabang_id }}" data-search="{{ strtolower($item->kode_items.' '.$item->nama_items) }}">
+                    @forelse($stockItems as $stockGroup)
+                        @php($item = $stockGroup['item'])
+                        <tr class="stock-check-row" data-search="{{ strtolower($item->kode_items.' '.$item->nama_items) }}">
                             <td>
                                 <strong>{{ $item->nama_items }}</strong>
-                                <small>{{ $item->kode_items }}</small>
                             </td>
-                            <td>{{ $item->cabang->nama_cabang ?? '-' }}</td>
-                            <td class="text-right stock-value">{{ $item->stok_items }} </td>
+                            <td>{{ $item->kode_items }}</td>
+                            <td class="text-right stock-value">{{ $stockGroup['total_stok'] }}</td>
                             <td>
-                                <a href="{{ route('items.show', $item) }}" class="btn btn-sm btn-info items-glossy" title="Lihat detail" aria-label="Lihat detail item">
+                                <a href="{{ route('dashboard.stock.show', $item) }}" class="btn btn-sm btn-info items-glossy" title="Lihat detail" aria-label="Lihat detail stok lintas cabang">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </td>
@@ -470,12 +456,12 @@
         width: 35%;
     }
 
-    .content .stock-check-table .stock-column-branch {
-        width: 27%;
+    .content .stock-check-table .stock-column-code {
+        width: 20%;
     }
 
     .content .stock-check-table .stock-column-quantity {
-        width: 23%;
+        width: 20%;
     }
 
     .content .stock-check-table .stock-column-action {
@@ -501,9 +487,9 @@
 
     .content .stock-check-table th:nth-child(3),
     .content .stock-check-table td:nth-child(3) {
-        padding-right: 0.25rem;
-        padding-left: 5rem;
-        text-align: left !important;
+        padding-right: 1rem;
+        padding-left: 0.25rem;
+        text-align: right !important;
     }
 
     .content .stock-check-table th:last-child,
@@ -620,20 +606,17 @@
     const chartMaximum = Math.max(...chartDataIn, ...chartDataOut, 0);
     const chartYAxisMaximum = Math.max(20, Math.ceil(chartMaximum / 20) * 20);
 
-    const stockBranchFilter = document.getElementById('stockBranchFilter');
     const stockItemFilter = document.getElementById('stockItemFilter');
     const stockRows = Array.from(document.querySelectorAll('.stock-check-row'));
     const stockFilterEmpty = document.getElementById('stockFilterEmpty');
 
     function filterStockRows() {
-        const branch = stockBranchFilter.value;
         const search = stockItemFilter.value.trim().toLowerCase();
         let visibleRows = 0;
 
         stockRows.forEach((row) => {
-            const matchesBranch = !branch || row.dataset.branch === branch;
             const matchesSearch = !search || row.dataset.search.includes(search);
-            const isVisible = matchesBranch && matchesSearch;
+            const isVisible = matchesSearch;
 
             row.hidden = !isVisible;
             visibleRows += isVisible ? 1 : 0;
@@ -642,7 +625,6 @@
         stockFilterEmpty.hidden = visibleRows > 0;
     }
 
-    stockBranchFilter.addEventListener('change', filterStockRows);
     stockItemFilter.addEventListener('input', filterStockRows);
 
     new Chart(ctx, {

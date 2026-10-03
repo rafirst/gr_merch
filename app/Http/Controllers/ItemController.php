@@ -51,10 +51,19 @@ class ItemController extends Controller
     public function show(Item $item)
     {
         $this->authorizeCabang($item);
+        /** @var User $user */
+        $user = Auth::user();
 
         $item->load('cabang');
+        $stockByCabang = Item::with('cabang')
+            ->where('kode_items', $item->kode_items)
+            ->where('nama_items', $item->nama_items)
+            ->when(! $user->isAdminHo(), fn ($query) => $query->where('cabang_id', $user->cabang_id))
+            ->orderBy('cabang_id')
+            ->get();
+        $totalStock = (int) $stockByCabang->sum('stok_items');
 
-        return view('items.show', compact('item'));
+        return view('items.show', compact('item', 'stockByCabang', 'totalStock'));
     }
 
     public function store(Request $request)

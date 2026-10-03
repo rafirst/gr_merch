@@ -10,8 +10,8 @@ class StockOut extends Model
     use HasFactory;
 
     protected $fillable = [
-        'item_id', 'cabang_id', 'jumlah', 'jenis', 'harga_jual', 'discount', 'voucher', 'total',
-        'nomor_spk', 'nomor_telepon', 'nama_customer', 'pic_penjualan', 'batch_id', 'status', 'tanggal', 'keterangan', 'user_id', 'approved_by',
+        'item_id', 'cabang_id', 'jumlah', 'jenis', 'jenis_pembayaran', 'harga_jual', 'discount', 'paket_bundling', 'total',
+        'nomor_spk', 'nomor_im', 'nomor_telepon', 'nama_customer', 'nik_ktp', 'alamat_customer', 'pic_penjualan', 'batch_id', 'status', 'tanggal', 'keterangan', 'user_id', 'approved_by',
         'approved_at', 'catatan_approval',
     ];
 
@@ -43,9 +43,10 @@ class StockOut extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    // Hanya Request yang membutuhkan approval admin pusat.
+    // Request dan penjualan TAG Member membutuhkan approval admin pusat.
     public function butuhApproval(): bool
     {
-        return $this->jenis === 'request';
+        return $this->jenis === 'request'
+            || ($this->jenis === 'penjualan' && (float) $this->discount === 15.0);
     }
 }

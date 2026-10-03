@@ -4,7 +4,7 @@
 @section('content')
 <div class="card">
     <div class="card-header history-toolbar">
-        <form class="history-filter-form" method="GET">
+        <form class="history-filter-form {{ ($tipe ?? '') !== 'out' ? 'history-filter-form-expanded' : '' }}" method="GET">
             <label class="history-field history-select-field">
                 <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                 <select name="tipe" class="form-control" onchange="this.form.submit()" aria-label="Pilih ringkasan">
@@ -14,6 +14,17 @@
                 <option value="approval" {{ ($tipe ?? '') == 'approval' ? 'selected' : '' }}>Items Approval</option>
                 </select>
             </label>
+            @if(($tipe ?? '') === 'out')
+                <label class="history-field history-jenis-field">
+                    <i class="fas fa-filter" aria-hidden="true"></i>
+                    <select name="jenis" class="form-control" onchange="this.form.submit()" aria-label="Pilih jenis barang keluar">
+                        <option value="">-- Jenis Keluar --</option>
+                        <option value="penjualan" {{ request('jenis') === 'penjualan' ? 'selected' : '' }}>Penjualan</option>
+                        <option value="request" {{ request('jenis') === 'request' ? 'selected' : '' }}>Request</option>
+                        <option value="DO" {{ request('jenis') === 'DO' ? 'selected' : '' }}>DO</option>
+                    </select>
+                </label>
+            @endif
             <label class="history-field history-search-field">
                 <i class="fas fa-search" aria-hidden="true"></i>
                 <input type="text" name="item" class="form-control" placeholder="Nama / kode item" value="{{ request('item') }}" aria-label="Nama item atau kode item">
@@ -26,12 +37,12 @@
                 <i class="fas fa-calendar-alt" aria-hidden="true"></i>
                 <input type="date" name="sampai" class="form-control" value="{{ request('sampai') }}" aria-label="Tanggal sampai">
             </label>
-            <button class="btn history-filter-button"><i class="fas fa-filter"></i><span>Filter</span></button>
+            <button class="btn history-filter-button" title="Terapkan filter" aria-label="Terapkan filter"><i class="fas fa-filter" aria-hidden="true"></i></button>
             <a href="{{ route('history.index') }}" class="btn history-reset-button" title="Reset filter" aria-label="Reset filter">
-                <i class="fas fa-undo-alt"></i><span>Reset</span>
+                <i class="fas fa-undo-alt"></i>
             </a>
         </form>
-        <a href="{{ route('history.export') }}" class="btn history-export-button"><i class="fas fa-file-excel"></i><span>Export</span></a>
+        <button type="button" class="btn history-export-button" id="historyExportButton" title="Ekspor histori" aria-label="Pilih format ekspor" aria-haspopup="dialog" aria-controls="historyExportModal"><i class="fas fa-file-pdf" aria-hidden="true"></i></button>
     </div>
     <div class="card-body p-0">
 
@@ -57,7 +68,7 @@
 
     @elseif(($tipe ?? null) === 'out')
         <table class="table table-striped mb-0 history-data-table history-out-table">
-            <thead><tr><th>Tanggal <i class="fas fa-sort ml-1"></i></th><th>Item <i class="fas fa-sort ml-1"></i></th><th>Jumlah <i class="fas fa-sort ml-1"></i></th><th>Jenis</th><th>Status</th><th>Oleh</th><th>Approved By</th><th class="text-center">Aksi</th></tr></thead>
+            <thead><tr><th>Tanggal <i class="fas fa-sort ml-1"></i></th><th>Item <i class="fas fa-sort ml-1"></i></th><th>Jumlah <i class="fas fa-sort ml-1"></i></th><th>Jenis</th><th>Status</th><th>Oleh</th><th>Pembayaran</th><th class="text-center">Aksi</th></tr></thead>
             <tbody>
             @forelse($riwayat as $row)
                 <tr>
@@ -67,7 +78,7 @@
                     <td><span class="badge history-type-badge">{{ ucfirst($row->jenis) }}</span></td>
                     <td><span class="badge history-status-badge">{{ ucfirst($row->status) }}</span></td>
                     <td>{{ $row->user->name ?? '-' }}</td>
-                    <td>{{ $row->approver->name ?? '-' }}</td>
+                    <td>{{ $row->jenis_pembayaran ? ucfirst($row->jenis_pembayaran) : '-' }}</td>
                     <td class="text-center"><a href="{{ route('history.show', ['type' => 'out', 'id' => $row->id]) }}" class="btn btn-sm history-action-button" title="Lihat detail" aria-label="Lihat detail histori barang keluar"><i class="fas fa-eye"></i></a></td>
                 </tr>
             @empty
@@ -139,6 +150,34 @@
 </div>
 @endsection
 
+<div class="history-export-modal" id="historyExportModal" aria-hidden="true">
+    <div class="history-export-backdrop" data-history-export-close></div>
+    <section class="history-export-dialog" role="dialog" aria-modal="true" aria-labelledby="historyExportTitle">
+        <div class="history-export-dialog-header">
+            <div>
+                <span class="history-export-kicker">Histori Transaksi</span>
+                <h3 id="historyExportTitle">Pilih Format Ekspor</h3>
+            </div>
+            <button type="button" class="history-export-close" data-history-export-close aria-label="Tutup pilihan ekspor">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
+        </div>
+        <div class="history-export-options">
+            <a href="{{ route('history.export') }}" class="history-export-option history-export-option-pdf">
+                <span class="history-export-option-icon"><i class="fas fa-file-pdf" aria-hidden="true"></i></span>
+                <span class="history-export-option-copy"><strong>Export PDF</strong><small>Unduh laporan dalam format PDF</small></span>
+                <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
+            </a>
+            <a href="{{ route('history.export.excel') }}" class="history-export-option history-export-option-excel">
+                <span class="history-export-option-icon"><i class="fas fa-file-excel" aria-hidden="true"></i></span>
+                <span class="history-export-option-copy"><strong>Export Excel</strong><small>Unduh data dalam format XLSX</small></span>
+                <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
+            </a>
+        </div>
+        <button type="button" class="history-export-cancel" data-history-export-close>Batal</button>
+    </section>
+</div>
+
 @push('styles')
 <style>
     .history-toolbar {
@@ -205,6 +244,29 @@
         width: 116px;
     }
 
+    @media (min-width: 992px) {
+        .history-filter-form-expanded {
+            flex: 1 1 auto;
+        }
+
+        .history-filter-form-expanded .history-select-field,
+        .history-filter-form-expanded .history-search-field,
+        .history-filter-form-expanded .history-date-field {
+            flex: 1 1 0;
+            width: auto;
+            min-width: 0;
+        }
+
+        .history-filter-form-expanded .history-select-field select {
+            width: 100%;
+        }
+    }
+
+    .history-jenis-field {
+        width: 142px;
+        min-width: 142px;
+    }
+
     .history-select-field select {
         appearance: auto;
         padding-right: 0.35rem;
@@ -225,8 +287,10 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.4rem;
+        width: 38px;
         height: 38px;
+        min-width: 0;
+        padding: 0;
         border: 1px solid rgba(255, 255, 255, 0.24) !important;
         border-radius: 4px;
         color: #ffffff !important;
@@ -238,24 +302,178 @@
     }
 
     .history-filter-button {
-        min-width: 66px;
         background: linear-gradient(145deg, #7c8e9f 0%, #526474 48%, #344451 100%) !important;
     }
 
     .history-reset-button {
-        min-width: 70px;
         background: linear-gradient(145deg, #aeb9c4 0%, #687887 48%, #465563 100%) !important;
     }
 
     .history-export-button {
         flex: 0 0 auto;
         margin-left: auto;
-        min-width: 116px;
         background: linear-gradient(145deg, #ff3b4b 0%, #df071a 48%, #8e000c 100%) !important;
+    }
+
+    .history-export-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: grid;
+        visibility: hidden;
+        place-items: center;
+        opacity: 0;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+
+    .history-export-modal.is-visible {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .history-export-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 4, 9, 0.78);
+        backdrop-filter: blur(4px);
+    }
+
+    .history-export-dialog {
+        position: relative;
+        width: min(430px, calc(100% - 2rem));
+        padding: 1.25rem;
+        border: 1px solid rgba(105, 143, 176, 0.4);
+        border-top: 3px solid #df071a;
+        border-radius: 6px;
+        background: linear-gradient(145deg, #172532, #050c14 72%);
+        box-shadow: 0 20px 55px rgba(0, 0, 0, 0.6);
+        transform: translateY(12px);
+        transition: transform 0.2s ease;
+    }
+
+    .history-export-modal.is-visible .history-export-dialog {
+        transform: translateY(0);
+    }
+
+    .history-export-dialog-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .history-export-kicker {
+        color: #ff6570;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .history-export-dialog h3 {
+        margin: 0.25rem 0 0;
+        color: #ffffff;
+        font-size: 1.15rem;
+    }
+
+    .history-export-close {
+        display: inline-grid;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(244, 247, 250, 0.8);
+        cursor: pointer;
+    }
+
+    .history-export-options {
+        display: grid;
+        gap: 0.6rem;
+    }
+
+    .history-export-option {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        min-width: 0;
+        padding: 0.75rem;
+        border: 1px solid rgba(105, 143, 176, 0.28);
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.035);
+        color: #ffffff;
+        text-decoration: none;
+        transition: border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .history-export-option:hover,
+    .history-export-option:focus {
+        border-color: rgba(255, 255, 255, 0.45);
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .history-export-option-icon {
+        display: inline-grid;
+        width: 38px;
+        height: 38px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 4px;
+        background: rgba(223, 7, 26, 0.16);
+        color: #ff5a68;
+        font-size: 1.1rem;
+    }
+
+    .history-export-option-excel .history-export-option-icon {
+        background: rgba(25, 174, 83, 0.16);
+        color: #5be58a;
+    }
+
+    .history-export-option-copy {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.18rem;
+    }
+
+    .history-export-option-copy strong {
+        font-size: 0.9rem;
+    }
+
+    .history-export-option-copy small {
+        color: rgba(244, 247, 250, 0.58);
+        font-size: 0.74rem;
+    }
+
+    .history-export-option-arrow {
+        color: rgba(244, 247, 250, 0.45);
+        font-size: 0.75rem;
+    }
+
+    .history-export-cancel {
+        display: block;
+        min-height: 36px;
+        margin: 0.9rem 0 0 auto;
+        padding: 0.4rem 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 4px;
+        background: transparent;
+        color: rgba(244, 247, 250, 0.78);
+        cursor: pointer;
+        font-size: 0.8rem;
     }
 
     .history-action-button {
         position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
         width: 30px;
         height: 30px;
@@ -263,7 +481,8 @@
         border: 1px solid rgba(255, 255, 255, 0.26) !important;
         background: linear-gradient(145deg, #69d8ed 0%, #159fbe 48%, #08728c 100%) !important;
         color: #ffffff !important;
-        line-height: 28px;
+        line-height: 1;
+        vertical-align: middle;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42), 0 2px 5px rgba(0, 0, 0, 0.24);
     }
 
@@ -470,17 +689,12 @@
 
     @media (max-width: 575.98px) {
         .history-filter-form,
-        .history-field,
-        .history-select-field,
-        .history-search-field,
-        .history-date-field,
-        .history-filter-button,
-        .history-reset-button {
+        .history-field {
             width: 100%;
         }
 
         .history-export-button {
-            width: 100%;
+            margin-left: auto;
         }
 
         .history-data-table {
@@ -506,4 +720,44 @@
         }
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('historyExportModal');
+        const openButton = document.getElementById('historyExportButton');
+        const pdfLink = modal.querySelector('.history-export-option-pdf');
+        let previouslyFocusedElement = null;
+
+        function closeModal() {
+            modal.classList.remove('is-visible');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            previouslyFocusedElement?.focus();
+        }
+
+        openButton.addEventListener('click', function () {
+            previouslyFocusedElement = document.activeElement;
+            modal.classList.add('is-visible');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            pdfLink.focus();
+        });
+
+        modal.querySelectorAll('[data-history-export-close]').forEach(function (element) {
+            element.addEventListener('click', closeModal);
+        });
+
+        modal.querySelectorAll('.history-export-option').forEach(function (link) {
+            link.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+                closeModal();
+            }
+        });
+    });
+</script>
 @endpush

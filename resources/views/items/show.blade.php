@@ -28,13 +28,28 @@
                     <div class="item-detail-row"><span>Kategori</span><strong>{{ $item->kategori ? ucfirst($item->kategori) : '-' }}</strong></div>
                     <div class="item-detail-row"><span>Harga Beli</span><strong>Rp {{ number_format($item->harga_items, 0, ',', '.') }}</strong></div>
                     <div class="item-detail-row"><span>Harga Jual</span><strong>Rp {{ number_format($item->harga_jual, 0, ',', '.') }}</strong></div>
-                    <div class="item-detail-row"><span>Stok Saat Ini</span><strong>{{ $item->stok_items }}</strong></div>
-                    <div class="item-detail-row"><span>Cabang</span><strong>{{ $item->cabang->nama_cabang ?? '-' }}</strong></div>
+                    <div class="item-detail-row"><span>Total Stok</span><strong>{{ $totalStock }}</strong></div>
+                    <div class="item-detail-row"><span>Cakupan</span><strong>{{ auth()->user()->isAdminHo() ? 'Semua cabang' : ($item->cabang->nama_cabang ?? '-') }}</strong></div>
                     <div class="item-detail-row"><span>Dibuat</span><strong>{{ $item->created_at?->format('d-m-Y H:i') ?? '-' }}</strong></div>
                     <div class="item-detail-row"><span>Diperbarui</span><strong>{{ $item->updated_at?->format('d-m-Y H:i') ?? '-' }}</strong></div>
                 </div>
             </div>
         </div>
+        <section class="item-branch-stock-section">
+            <h3><i class="fas fa-code-branch"></i> Stok per Cabang</h3>
+            <div class="table-responsive">
+                <table class="table item-branch-stock-table mb-0">
+                    <thead><tr><th>Cabang</th><th class="text-right">Stok</th></tr></thead>
+                    <tbody>
+                        @forelse($stockByCabang as $branchItem)
+                            <tr><td>{{ $branchItem->cabang->nama_cabang ?? '-' }}</td><td class="text-right">{{ $branchItem->stok_items }}</td></tr>
+                        @empty
+                            <tr><td colspan="2" class="text-center">Tidak ada stok item pada cakupan ini.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
 </div>
 @endsection
@@ -88,6 +103,43 @@
     .item-detail-row strong {
         min-width: 0;
         padding: 0.7rem;
+    }
+
+    .item-branch-stock-section {
+        margin-top: 1.25rem;
+        border: 1px solid rgba(105, 143, 176, 0.3);
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.12);
+    }
+
+    .item-branch-stock-section h3 {
+        margin: 0;
+        padding: 0.75rem 0.9rem;
+        border-bottom: 1px solid rgba(105, 143, 176, 0.22);
+        color: #ffffff;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    .item-branch-stock-section h3 i {
+        margin-right: 0.4rem;
+        color: #f70008;
+    }
+
+    .item-branch-stock-table {
+        color: #f4f7fa;
+    }
+
+    .item-branch-stock-table th,
+    .item-branch-stock-table td {
+        padding: 0.65rem 0.9rem;
+        border-color: rgba(105, 143, 176, 0.18);
+    }
+
+    .item-branch-stock-table th {
+        color: rgba(244, 247, 250, 0.62);
+        font-size: 0.72rem;
+        text-transform: uppercase;
     }
 
     .item-detail-row span {

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cabang;
 use App\Models\Item;
 use App\Models\StockIn;
 use App\Models\StockOut;
@@ -59,17 +58,33 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $stockItems = (clone $itemQuery)
+        $stockItems = Item::query()
             ->with('cabang')
             ->orderBy('nama_items')
-            ->get();
-        $cabangs = $isAdmin
-            ? Cabang::orderBy('nama_cabang')->get()
-            : Cabang::whereKey($user->cabang_id)->get();
+            ->get()
+            ->groupBy(fn (Item $item): string => json_encode([$item->kode_items, $item->nama_items], JSON_UNESCAPED_UNICODE))
+            ->map(fn ($items): array => [
+                'item' => $items->first(),
+                'total_stok' => (int) $items->sum('stok_items'),
+            ])
+            ->values();
 
         return view('dashboard.index', compact(
             'totalItems', 'totalStok', 'pendingApproval',
-            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin', 'stockItems', 'cabangs'
+            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin', 'stockItems'
         ));
+    }
+
+    public function showStock(Item $item)
+    {
+        $item->load('cabang');
+        $stockByCabang = Item::with('cabang')
+            ->where('kode_items', $item->kode_items)
+            ->where('nama_items', $item->nama_items)
+            ->orderBy('cabang_id')
+            ->get();
+        $totalStock = (int) $stockByCabang->sum('stok_items');
+
+        return view('dashboard.show', compact('item', 'stockByCabang', 'totalStock'));
     }
 }

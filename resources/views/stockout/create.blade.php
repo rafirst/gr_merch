@@ -6,36 +6,60 @@
     <div class="card-body">
         <form action="{{ route('stockout.store') }}" method="POST">
             @csrf
-            <div class="form-row">
-                <div class="form-group col-md-3">
-                    <label>Jenis Keluar</label>
-                    <select name="jenis" id="jenis" class="form-control" required>
-                        <option value="penjualan">Penjualan</option>
-                        <option value="DO">DO</option>
-                        <option value="request">Request</option>
-                    </select>
+            <section class="stockout-form-section" aria-labelledby="customerDataTitle">
+                <h3 class="stockout-form-section-title" id="customerDataTitle">Data Customer</h3>
+                <div class="form-row stockout-customer-row">
+                    <div class="form-group">
+                        <label for="namaCustomer">Nama Customer <span class="required-indicator">*</span></label>
+                        <input type="text" name="nama_customer" id="namaCustomer" class="form-control" value="{{ old('nama_customer') }}" maxlength="255" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nikKtp">NIK KTP <span class="required-indicator">*</span></label>
+                        <input type="text" name="nik_ktp" id="nikKtp" class="form-control" value="{{ old('nik_ktp') }}" minlength="16" maxlength="16" inputmode="numeric" pattern="[0-9]{16}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nomorTelepon">No. Telepon <span class="required-indicator">*</span></label>
+                        <input type="tel" name="nomor_telepon" id="nomorTelepon" class="form-control" value="{{ old('nomor_telepon') }}" maxlength="30" inputmode="numeric" pattern="[0-9]*" required>
+                    </div>
+                    <div class="form-group stockout-customer-address">
+                        <label for="alamatCustomer">Alamat <span class="required-indicator">*</span></label>
+                        <textarea name="alamat_customer" id="alamatCustomer" class="form-control" rows="2" maxlength="2000" required>{{ old('alamat_customer') }}</textarea>
+                    </div>
                 </div>
-                <div class="form-group col-md-3">
-                    <label>Nama Customer</label>
-                    <input type="text" name="nama_customer" class="form-control" value="{{ old('nama_customer') }}" maxlength="255">
+            </section>
+
+            <section class="stockout-form-section" aria-labelledby="transactionDataTitle">
+                <h3 class="stockout-form-section-title" id="transactionDataTitle">Data Transaksi</h3>
+                <div class="stockout-transaction-layout" id="stockoutTransactionLayout">
+                <div class="form-row stockout-transaction-row">
+                    <div class="form-group">
+                        <label for="jenis">Jenis Keluar</label>
+                        <select name="jenis" id="jenis" class="form-control" required>
+                            <option value="penjualan" @selected(old('jenis', 'penjualan') === 'penjualan')>Penjualan</option>
+                            <option value="DO" @selected(old('jenis') === 'DO')>DO</option>
+                            <option value="request" @selected(old('jenis') === 'request')>Request</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="picPenjualan">PIC</label>
+                        <input type="text" name="pic_penjualan" id="picPenjualan" class="form-control" value="{{ old('pic_penjualan') }}" maxlength="255">
+                    </div>
                 </div>
-                <div class="form-group col-md-3">
-                    <label>PIC</label>
-                    <input type="text" name="pic_penjualan" class="form-control" value="{{ old('pic_penjualan') }}" maxlength="255">
+
+                <div class="form-row stockout-transaction-reference-row">
+                    <div class="form-group col-md-3" id="nomorSpkWrap" hidden>
+                        <label for="nomorSpk">Nomor SPK</label>
+                        <input type="text" name="nomor_spk" id="nomorSpk" class="form-control" value="{{ old('nomor_spk') }}" maxlength="100">
+                    </div>
+                    <div class="form-group col-md-3" id="nomorImWrap" hidden>
+                        <label for="nomorIm">Nomor IM</label>
+                        <input type="text" name="nomor_im" id="nomorIm" class="form-control" value="{{ old('nomor_im') }}" maxlength="100">
+                    </div>
                 </div>
-                <div class="form-group col-md-3" id="nomorTeleponWrap" hidden>
-                    <label for="nomorTelepon">Nomor Telpon</label>
-                    <input type="tel" name="nomor_telepon" id="nomorTelepon" class="form-control" value="{{ old('nomor_telepon') }}" maxlength="30" inputmode="numeric" pattern="[0-9]*">
-                </div>
-                <div class="form-group col-md-3" id="nomorSpkWrap" hidden>
-                    <label for="nomorSpk">Nomor SPK</label>
-                    <input type="text" name="nomor_spk" id="nomorSpk" class="form-control" value="{{ old('nomor_spk') }}" maxlength="100">
-                </div>
-            </div>
 
             <div id="itemRows">
                 <div class="form-row item-row">
-                    <div class="form-group col-md-5">
+                    <div class="form-group col-md-5 item-select-group">
                         <label>Item</label>
                         <div class="stockout-item-search-wrapper">
                             <input type="hidden" name="item_id[]" class="item-id-input">
@@ -54,26 +78,27 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group col-md-2">
+                    <div class="form-group col-md-2 quantity-group">
                         <label>Jumlah</label>
                         <input type="number" name="jumlah[]" class="form-control quantity-input" min="1" required>
                     </div>
-                    <div class="form-group col-md-2 harga-jual-wrap">
+                    <div class="form-group col-md-2 harga-jual-wrap price-group">
                         <label>Harga Jual (Rp)</label>
                         <input type="text" class="form-control price-display" readonly>
                         <input type="hidden" name="harga_jual[]" class="price-input">
                     </div>
-                    <div class="form-group col-md-2 total-wrap">
+                    <div class="form-group col-md-2 total-wrap total-group">
                         <label>Total Harga (Rp)</label>
                         <input type="text" class="form-control total-display" readonly>
                         <input type="hidden" class="total-input">
                     </div>
-                    <div class="form-group col-md-1 d-flex align-items-end">
+                    <div class="form-group col-md-1 d-flex align-items-end remove-item-group">
                         <button type="button" class="btn btn-danger remove-item" title="Hapus item" disabled><i class="fas fa-minus"></i></button>
                     </div>
                 </div>
             </div>
             <button type="button" class="btn btn-secondary mb-3" id="addItem"><i class="fas fa-plus"></i> Tambah Barang</button>
+                </div>
             <div class="form-row stockout-meta-row">
                 <div class="form-group col-md-3" id="discountWrap">
                     <label>Discount</label>
@@ -84,15 +109,24 @@
                     </select>
                 </div>
                 <div class="form-group col-md-3">
+                    <label for="jenisPembayaran">Jenis Pembayaran</label>
+                    <select name="jenis_pembayaran" id="jenisPembayaran" class="form-control" required>
+                        <option value="">- Pilih Jenis Pembayaran -</option>
+                        <option value="qris" @selected(old('jenis_pembayaran') === 'qris')>QRIS</option>
+                        <option value="transfer" @selected(old('jenis_pembayaran') === 'transfer')>Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-3">
                     <label>Tanggal</label>
                     <input type="date" name="tanggal" class="form-control" value="{{ date('Y-m-d') }}" readonly required>
                 </div>
-                <div class="form-group col-md-3" id="voucherWrap" hidden>
-                    <label for="voucher">Voucher</label>
-                    <select name="voucher" id="voucher" class="form-control">
-                        <option value="">- Pilih Voucher -</option>
-                        <option value="500k">Voucher 500K</option>
-                        <option value="1jt">Voucher 1JT</option>
+                <div class="form-group col-md-3" id="paketBundlingWrap" hidden>
+                    <label for="paketBundling">Paket Bundling</label>
+                    <select name="paket_bundling" id="paketBundling" class="form-control">
+                        <option value="">- Pilih Paket Bundling -</option>
+                        <option value="paket_a" @selected(old('paket_bundling') === 'paket_a')>Paket A</option>
+                        <option value="paket_b" @selected(old('paket_bundling') === 'paket_b')>Paket B</option>
+                        <option value="paket_c" @selected(old('paket_bundling') === 'paket_c')>Paket C</option>
                     </select>
                 </div>
             </div>
@@ -105,6 +139,7 @@
             </div>
             <button class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
             <a href="{{ route('stockout.index') }}" class="btn btn-secondary">Batal</a>
+            </section>
         </form>
     </div>
 </div>
@@ -122,8 +157,8 @@
             <div><span>Jenis Keluar</span><strong id="previewJenis">Penjualan</strong></div>
             <div><span>Customer</span><strong id="previewCustomer">-</strong></div>
             <div><span>PIC Penjualan</span><strong id="previewPic">-</strong></div>
+            <div><span>Jenis Pembayaran</span><strong id="previewJenisPembayaran">-</strong></div>
             <div id="previewNomorTeleponWrap"><span>Nomor Telpon</span><strong id="previewNomorTelepon">-</strong></div>
-            <div id="previewNomorSpkWrap" hidden><span>Nomor SPK</span><strong id="previewNomorSpk">-</strong></div>
         </div>
 
         <div class="stockout-preview-table-wrap">
@@ -146,7 +181,7 @@
             <div class="stockout-preview-totals">
                 <div><span>Subtotal</span><strong id="previewSubtotal">Rp 0</strong></div>
                 <div><span id="previewDiscountLabel">Potongan (0%)</span><strong id="previewDiscountAmount">Rp 0</strong></div>
-                <div id="previewChangeWrap" hidden><span>Kembalian</span><strong id="previewChange">Rp 0</strong></div>
+                <div id="previewPpnRow"><span>PPN 11%</span><strong id="previewPpnAmount">Rp 0</strong></div>
                 <div class="preview-grand-total"><span>Total Keseluruhan</span><strong id="previewTotal">Rp 0</strong></div>
             </div>
         </div>
@@ -164,15 +199,156 @@
         padding: 1.05rem 1.2rem 1.15rem;
     }
 
-    .stockout-form-card form > .form-row:first-of-type {
+    .stockout-form-section + .stockout-form-section {
+        margin-top: 0.35rem;
+        padding-top: 0.85rem;
+        border-top: 1px solid rgba(105, 143, 176, 0.25);
+    }
+
+    .stockout-form-section-title {
+        margin: 0 0 0.75rem;
+        color: #f4f7fa;
+        font-size: 0.86rem;
+        font-weight: 700;
+    }
+
+    .required-indicator {
+        color: #ff6268;
+    }
+
+    .stockout-form-card .stockout-customer-row,
+    .stockout-form-card .stockout-transaction-row {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.85rem;
         margin-right: 0;
         margin-left: 0;
     }
 
-    .stockout-form-card form > .form-row:first-of-type > .form-group,
+    .stockout-form-card .stockout-customer-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stockout-form-card .stockout-transaction-row {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stockout-form-card .stockout-transaction-reference-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.85rem;
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .stockout-form-card .stockout-transaction-layout.is-sales {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) 38px;
+        align-items: end;
+        gap: 0.2rem 0.7rem;
+    }
+
+    @media (min-width: 768px) {
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr)) 38px;
+            align-items: end;
+            gap: 0.2rem 0.7rem;
+        }
+
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) .stockout-transaction-row,
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) .stockout-transaction-reference-row {
+            display: contents;
+        }
+
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) .stockout-transaction-row > .form-group:first-child {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) .stockout-transaction-row > .form-group:nth-child(2) {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) #nomorSpkWrap,
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) #nomorImWrap {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) #itemRows,
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) #addItem {
+            grid-column: 1 / -1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout:not(.is-sales) #addItem {
+            justify-self: start;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row,
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows {
+            display: contents;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child {
+            display: contents;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:not(:first-child) {
+            display: grid;
+            grid-column: 1 / -1;
+            grid-template-columns: minmax(0, 5fr) minmax(88px, 2fr) minmax(105px, 2fr) minmax(105px, 2fr) 38px;
+            gap: 0.7rem;
+            align-items: end;
+            margin-right: 0;
+            margin-left: 0;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row > .form-group:first-child {
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row > .form-group:nth-child(2) {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .item-select-group {
+            grid-column: 3;
+            grid-row: 1;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .quantity-group {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .price-group {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .total-group {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .remove-item-group {
+            grid-column: 4;
+            grid-row: 2;
+            align-self: end;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #addItem {
+            grid-column: 1 / -1;
+            justify-self: start;
+        }
+    }
+
+    .stockout-form-card .stockout-customer-row > .form-group,
+    .stockout-form-card .stockout-transaction-row > .form-group,
+    .stockout-form-card .stockout-transaction-reference-row > .form-group,
     .stockout-form-card #itemRows .form-group,
     .stockout-form-card form > .form-row:last-of-type > .form-group,
     .stockout-form-card .stockout-meta-row > .form-group {
@@ -182,6 +358,10 @@
         margin-left: 0;
         padding-right: 0;
         padding-left: 0;
+    }
+
+    .stockout-customer-address {
+        grid-column: 1 / -1;
     }
 
     .stockout-form-card .form-group {
@@ -339,7 +519,7 @@
 
     .stockout-form-card .stockout-meta-row {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.85rem;
         margin-right: 0;
         margin-left: 0;
@@ -367,10 +547,60 @@
             padding: 0.9rem;
         }
 
-        .stockout-form-card form > .form-row:first-of-type,
+        .stockout-form-card .stockout-customer-row,
+        .stockout-form-card .stockout-transaction-row,
         .stockout-form-card .stockout-meta-row {
             grid-template-columns: 1fr;
             gap: 0;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales {
+            display: block;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows {
+            display: block;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .item-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(84px, 0.55fr);
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .item-select-group {
+            grid-column: 1 / -1 !important;
+            grid-row: auto !important;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .quantity-group {
+            grid-column: 1 !important;
+            grid-row: auto !important;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .price-group {
+            grid-column: 2 !important;
+            grid-row: auto !important;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .total-group {
+            grid-column: 1 !important;
+            grid-row: auto !important;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales .remove-item-group {
+            grid-column: 2 !important;
+            grid-row: auto !important;
+            justify-content: flex-end;
+            padding-bottom: 0.75rem;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #addItem {
+            margin-top: 0.05rem;
         }
 
         .stockout-form-card #itemRows .item-row {
@@ -441,14 +671,14 @@
 
     .stockout-preview-meta {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.7rem;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.45rem;
         margin-bottom: 1.25rem;
     }
 
     .stockout-preview-meta > div {
         min-width: 0;
-        padding: 0.7rem 0.75rem;
+        padding: 0.55rem;
         border-left: 2px solid #ef1d2f;
         background: rgba(105, 143, 176, 0.08);
     }
@@ -616,38 +846,38 @@
 @push('scripts')
 <script>
     const jenisSelect = document.getElementById('jenis');
+    const jenisPembayaranSelect = document.getElementById('jenisPembayaran');
     const discountWrap = document.getElementById('discountWrap');
     const discountInput = document.getElementById('discount');
-    const voucherWrap = document.getElementById('voucherWrap');
-    const voucherInput = document.getElementById('voucher');
-    const previewChangeWrap = document.getElementById('previewChangeWrap');
+    const paketBundlingWrap = document.getElementById('paketBundlingWrap');
+    const paketBundlingInput = document.getElementById('paketBundling');
     const infoBox = document.getElementById('infoApproval');
-    const nomorTeleponWrap = document.getElementById('nomorTeleponWrap');
     const nomorTeleponInput = document.getElementById('nomorTelepon');
     const nomorSpkWrap = document.getElementById('nomorSpkWrap');
     const nomorSpkInput = document.getElementById('nomorSpk');
-    const previewNomorTeleponWrap = document.getElementById('previewNomorTeleponWrap');
-    const previewNomorSpkWrap = document.getElementById('previewNomorSpkWrap');
+    const nomorImWrap = document.getElementById('nomorImWrap');
+    const nomorImInput = document.getElementById('nomorIm');
+    const transactionLayout = document.getElementById('stockoutTransactionLayout');
     const itemRows = document.getElementById('itemRows');
     const addItemButton = document.getElementById('addItem');
     const previewItems = document.getElementById('previewItems');
     const previewElements = {
         jenis: document.getElementById('previewJenis'),
+        jenisPembayaran: document.getElementById('previewJenisPembayaran'),
         customer: document.getElementById('previewCustomer'),
         pic: document.getElementById('previewPic'),
         nomorTelepon: document.getElementById('previewNomorTelepon'),
-        nomorSpk: document.getElementById('previewNomorSpk'),
         tanggal: document.getElementById('previewTanggal'),
         subtotal: document.getElementById('previewSubtotal'),
+        ppnAmount: document.getElementById('previewPpnAmount'),
         discountLabel: document.getElementById('previewDiscountLabel'),
         discountAmount: document.getElementById('previewDiscountAmount'),
-        change: document.getElementById('previewChange'),
         total: document.getElementById('previewTotal'),
     };
 
     const discountRates = {
-        member: 20,
-        retail: 15,
+        member: 15,
+        retail: 10,
     };
 
     function formatCurrency(value) {
@@ -671,27 +901,37 @@
     function toggleJenis() {
         const salesOnlyFields = document.querySelectorAll('.harga-jual-wrap, .total-wrap');
         const isPenjualan = jenisSelect.value === 'penjualan';
-        const requiresSpk = jenisSelect.value === 'DO' || jenisSelect.value === 'request';
+        const isMemberSale = isPenjualan && discountInput.value === 'member';
+        const requiresSpk = jenisSelect.value === 'DO';
+        const requiresIm = jenisSelect.value === 'request';
         const isDo = jenisSelect.value === 'DO';
         const isRequest = jenisSelect.value === 'request';
 
         itemRows.classList.toggle('is-non-sales', !isPenjualan);
-        nomorTeleponWrap.hidden = !isPenjualan;
+        transactionLayout.classList.toggle('is-sales', isPenjualan);
         nomorSpkWrap.hidden = !requiresSpk;
-        previewNomorTeleponWrap.hidden = !isPenjualan;
-        previewNomorSpkWrap.hidden = !requiresSpk;
+        nomorImWrap.hidden = !requiresIm;
         nomorSpkInput.required = requiresSpk;
-        voucherWrap.hidden = !isDo;
-        voucherInput.disabled = !isDo;
-        voucherInput.required = isDo;
+        nomorImInput.required = requiresIm;
+        paketBundlingWrap.hidden = !isDo;
+        paketBundlingInput.disabled = !isDo;
+        paketBundlingInput.required = isDo;
 
         if (isPenjualan) {
             salesOnlyFields.forEach((field) => field.style.display = '');
             discountWrap.style.display = '';
             discountInput.disabled = false;
             discountInput.required = true;
-            infoBox.innerHTML = '<i class="fas fa-info-circle"></i> Transaksi <strong>Penjualan</strong> akan langsung tercatat & mengurangi stok.';
-            infoBox.className = 'alert alert-info';
+            if (isMemberSale) {
+                infoBox.innerHTML = '<i class="fas fa-clock"></i> Diskon <strong>TAG Member 15%</strong> memerlukan approval Admin Pusat sebelum stok dipotong.';
+                infoBox.className = 'alert alert-warning';
+            } else if (discountInput.value === 'retail') {
+                infoBox.innerHTML = '<i class="fas fa-info-circle"></i> Diskon <strong>Retail 10%</strong> akan langsung tercatat & mengurangi stok.';
+                infoBox.className = 'alert alert-info';
+            } else {
+                infoBox.innerHTML = '<i class="fas fa-info-circle"></i> Pilih discount penjualan. TAG Member 15% memerlukan approval; Retail 10% langsung mengurangi stok.';
+                infoBox.className = 'alert alert-info';
+            }
         } else if (isDo) {
             salesOnlyFields.forEach((field) => field.style.display = 'none');
             discountWrap.style.display = 'none';
@@ -727,20 +967,17 @@
 
     function renderPreview() {
         const discount = discountRates[discountInput.value] || 0;
-        const voucherAmounts = {
-            '500k': 500000,
-            '1jt': 1000000,
-        };
-        const voucherAmount = jenisSelect.value === 'DO' ? (voucherAmounts[voucherInput.value] || 0) : 0;
         let subtotal = 0;
         let total = 0;
         let itemCount = 0;
 
         setPreviewText(previewElements.jenis, jenisSelect.options[jenisSelect.selectedIndex]?.text);
+        setPreviewText(previewElements.jenisPembayaran, jenisPembayaranSelect.value
+            ? jenisPembayaranSelect.options[jenisPembayaranSelect.selectedIndex].text
+            : '-');
         setPreviewText(previewElements.customer, document.querySelector('[name="nama_customer"]').value.trim());
         setPreviewText(previewElements.pic, document.querySelector('[name="pic_penjualan"]').value.trim());
         setPreviewText(previewElements.nomorTelepon, nomorTeleponInput.value.trim());
-        setPreviewText(previewElements.nomorSpk, nomorSpkInput.value.trim());
         setPreviewText(previewElements.tanggal, document.querySelector('[name="tanggal"]').value);
 
         previewItems.innerHTML = '';
@@ -789,20 +1026,22 @@
             previewItems.innerHTML = '<tr><td colspan="4" class="preview-empty"><i class="fas fa-box-open"></i><span>Pilih item untuk melihat detail transaksi.</span></td></tr>';
         }
 
-        const changeAmount = jenisSelect.value === 'DO' ? Math.max(0, voucherAmount - subtotal) : 0;
-        const totalAfterVoucher = jenisSelect.value === 'DO'
-            ? Math.max(0, subtotal - voucherAmount)
-            : total;
+        const hasTransactionTotal = ['penjualan', 'DO'].includes(jenisSelect.value);
+        const ppnAmount = hasTransactionTotal ? Math.round(subtotal * 0.11) : 0;
+        const subtotalWithPpn = subtotal + ppnAmount;
+        const totalAfterDiscount = jenisSelect.value === 'DO'
+            ? subtotalWithPpn
+            : total + ppnAmount;
         const discountLabel = jenisSelect.value === 'DO'
-            ? 'Potongan (' + formatCurrency(voucherAmount) + ')'
+            ? 'Potongan (0%)'
             : 'Potongan (' + discount + '%)';
-        previewChangeWrap.hidden = true;
+        document.getElementById('previewPpnRow').hidden = !hasTransactionTotal;
 
         setPreviewText(previewElements.subtotal, formatCurrency(subtotal));
+        setPreviewText(previewElements.ppnAmount, formatCurrency(ppnAmount));
         setPreviewText(previewElements.discountLabel, discountLabel);
-        setPreviewText(previewElements.discountAmount, formatCurrency(jenisSelect.value === 'DO' ? voucherAmount : subtotal - total));
-        setPreviewText(previewElements.change, formatCurrency(changeAmount));
-        setPreviewText(previewElements.total, formatCurrency(totalAfterVoucher));
+        setPreviewText(previewElements.discountAmount, formatCurrency(jenisSelect.value === 'DO' ? 0 : subtotal - total));
+        setPreviewText(previewElements.total, formatCurrency(totalAfterDiscount));
     }   
 
     function updateRemoveButtons() {
@@ -910,14 +1149,15 @@
         renderPreview();
     });
 
-    discountInput.addEventListener('change', calculateTotals);
-    voucherInput.addEventListener('change', renderPreview);
+    discountInput.addEventListener('change', toggleJenis);
+    jenisPembayaranSelect.addEventListener('change', renderPreview);
+    paketBundlingInput.addEventListener('change', renderPreview);
     jenisSelect.addEventListener('change', toggleJenis);
     nomorTeleponInput.addEventListener('input', function () {
         this.value = this.value.replace(/\D/g, '');
         renderPreview();
     });
-    document.querySelectorAll('[name="nama_customer"], [name="pic_penjualan"], [name="nomor_telepon"], [name="nomor_spk"], [name="keterangan"]').forEach((input) => {
+    document.querySelectorAll('[name="nama_customer"], [name="pic_penjualan"], [name="nomor_telepon"], [name="nomor_spk"], [name="nomor_im"], [name="keterangan"]').forEach((input) => {
         input.addEventListener('input', renderPreview);
     });
     document.querySelector('[name="tanggal"]').addEventListener('change', renderPreview);

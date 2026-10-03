@@ -54,15 +54,18 @@
                     <div class="history-detail-row"><span>Tipe Request</span><strong>Edit Stok</strong></div>
                     <div class="history-detail-row history-detail-row-wide"><span>Keterangan</span><strong>{{ $record->new_keterangan ?: '-' }}</strong></div>
                 @elseif($isStockOut)
-                    <div class="history-detail-row"><span>Jumlah</span><strong>{{ $record->jumlah }} {{ $item->harga_jual ? 'Rp ' . number_format($item->harga_jual, 0, ',', '.') : '-' }}</strong></div>
+                    <div class="history-detail-row"><span>Jumlah</span><strong>{{ $record->jumlah }} </strong></div>
                     <div class="history-detail-row"><span>Jenis</span><strong>{{ ucfirst($record->jenis) }}</strong></div>
+                    @if($type === 'out')
+                        <div class="history-detail-row"><span>Jenis Pembayaran</span><strong>{{ $record->jenis_pembayaran ? ucfirst($record->jenis_pembayaran) : '-' }}</strong></div>
+                    @endif
                     @if($isApproval)
                         <div class="history-detail-row"><span>Status Approval</span><strong>{{ ucfirst($record->status) }}</strong></div>
                         <div class="history-detail-row"><span>Approved By</span><strong>{{ $record->approver->name ?? '-' }}</strong></div>
                     @endif
                     <div class="history-detail-row history-detail-row-wide"><span>Keterangan</span><strong>{{ $record->keterangan ?: '-' }}</strong></div>
                 @else
-                    <div class="history-detail-row"><span>Jumlah Masuk</span><strong>+{{ $record->jumlah }} {{ $item->harga_jual ? 'Rp ' . number_format($item->harga_jual, 0, ',', '.') : '-' }}</strong></div>
+                    <div class="history-detail-row"><span>Jumlah Masuk</span><strong>+{{ $record->jumlah }} </strong></div>
                     <div class="history-detail-row"><span>Sumber</span><strong>{{ $record->sumber ?: '-' }}</strong></div>
                     <div class="history-detail-row history-detail-row-wide"><span>Keterangan</span><strong>{{ $record->keterangan ?: '-' }}</strong></div>
                 @endif

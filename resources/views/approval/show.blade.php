@@ -4,6 +4,9 @@
 @section('content')
 @php
     $isStockInEdit = $approvalType === 'edit_stok';
+    $approvalLabel = $isStockInEdit
+        ? 'Edit Stok'
+        : ($approvalType === 'penjualan_member' ? 'Penjualan TAG Member' : 'Request');
     $item = $isStockInEdit ? $editRequest->oldItem : $stockOut->item;
     $cabang = $isStockInEdit ? $editRequest->oldItem?->cabang : $stockOut->cabang;
     $requester = $isStockInEdit ? $editRequest->requester : $stockOut->user;
@@ -24,7 +27,7 @@
     <div class="card-body">
         <div class="approval-detail-type approval-type-{{ $isStockInEdit ? 'edit' : 'transaction' }}">
             <i class="fas {{ $isStockInEdit ? 'fa-pen' : 'fa-file-invoice' }}"></i>
-            <span>{{ $isStockInEdit ? 'Edit Stok' : 'Request' }}</span>
+            <span>{{ $approvalLabel }}</span>
         </div>
 
         <section class="approval-information-panel" aria-labelledby="approvalInformationTitle">
@@ -62,7 +65,7 @@
                 </div>
                 <div class="approval-detail-row">
                     <span>Tipe Request</span>
-                    <strong>{{ $isStockInEdit ? 'Edit Stok' : 'Request' }}</strong>
+                    <strong>{{ $approvalLabel }}</strong>
                 </div>
             </div>
         </section>

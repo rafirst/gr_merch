@@ -9,7 +9,9 @@ use App\Exports\StockInImportTemplateExport;
 use App\Exports\StockItemsExport;
 use App\Imports\ItemsImport;
 use App\Imports\StockInImport;
+use Dompdf\Dompdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Exception as PhpSpreadsheetException;
 
@@ -17,7 +19,13 @@ class ExportImportController extends Controller
 {
     public function exportItems()
     {
-        return Excel::download(new ItemsExport, 'data-items-gr-merch-'.now()->format('Ymd-His').'.xlsx');
+        return $this->downloadPdf(
+            new ItemsExport,
+            'Laporan Merchandise',
+            'Daftar merchandise beserta kategori, harga, dan stok saat ini.',
+            'Data Merchandise',
+            'data-items-gr-merch-'.now()->format('Ymd-His').'.pdf',
+        );
     }
 
     public function exportItemsImportTemplate()
@@ -27,17 +35,61 @@ class ExportImportController extends Controller
 
     public function exportHistory()
     {
-        return Excel::download(new HistoryExport, 'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.xlsx');
+        return $this->downloadPdf(
+            new HistoryExport,
+            'Laporan Histori Transaksi',
+            'Catatan transaksi barang keluar yang tercatat dalam sistem.',
+            'Histori Transaksi',
+            'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.pdf',
+        );
+    }
+
+    public function exportHistoryExcel()
+    {
+        return Excel::download(
+            new HistoryExport,
+            'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.xlsx',
+        );
     }
 
     public function exportStockIn()
     {
-        return Excel::download(new StockItemsExport, 'data-stok-items-gr-merch-'.now()->format('Ymd-His').'.xlsx');
+        return $this->downloadPdf(
+            new StockItemsExport,
+            'Laporan Stok Merchandise',
+            'Ringkasan jumlah dan status stok merchandise saat ini.',
+            'Data Merchandise',
+            'data-stok-items-gr-merch-'.now()->format('Ymd-His').'.pdf',
+        );
     }
 
     public function exportStockInImportTemplate()
     {
         return Excel::download(new StockInImportTemplateExport, 'template-import-barang-masuk-gr-merch.xlsx');
+    }
+
+    private function downloadPdf(object $export, string $title, string $subtitle, string $sectionTitle, string $filename): Response
+    {
+        $rows = $export->collection()
+            ->map(fn ($row): array => $export->map($row))
+            ->all();
+
+        $pdf = new Dompdf;
+        $pdf->loadHtml(view('exports.table-pdf', [
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'sectionTitle' => $sectionTitle,
+            'headings' => $export->headings(),
+            'rows' => $rows,
+            'generatedAt' => now()->format('d/m/Y H:i'),
+        ])->render(), 'UTF-8');
+        $pdf->setPaper('A4', 'landscape');
+        $pdf->render();
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+        ]);
     }
 
     public function showImportForm()

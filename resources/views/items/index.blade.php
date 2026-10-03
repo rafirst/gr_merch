@@ -21,21 +21,29 @@
                 <i class="fas fa-undo-alt"></i>
             </a>
             <a href="{{ route('items.export') }}" class="btn btn-success items-glossy" title="Export item" aria-label="Export item">
-                <i class="fas fa-file-excel"></i>
+                <i class="fas fa-file-pdf"></i>
             </a>
-            <a href="{{ route('items.import.form') }}" class="btn btn-info items-glossy" title="Import item" aria-label="Import item">
-                <i class="fas fa-file-import"></i>
-            </a>
-            <a href="{{ route('items.create') }}" class="btn btn-primary items-glossy" title="Tambah item" aria-label="Tambah item">
-                <i class="fas fa-plus"></i>
-            </a>
+            @if(auth()->user()->isAdminHo())
+                <a href="{{ route('items.import.form') }}" class="btn btn-info items-glossy" title="Import item" aria-label="Import item">
+                    <i class="fas fa-file-import"></i>
+                </a>
+                <a href="{{ route('items.create') }}" class="btn btn-primary items-glossy" title="Tambah item" aria-label="Tambah item">
+                    <i class="fas fa-plus"></i>
+                </a>
+            @endif
         </div>
     </div>
     <div class="card-body p-0">
         <table class="table table-striped mb-0">
             <thead>
                 <tr>
-                    <th>Kode</th><th>Nama Item</th><th>Kategori</th><th>Harga</th><th>Cabang</th><th>Aksi</th>
+                    <th>Kode</th><th>Nama Item</th><th>Kategori</th><th>Harga</th>
+                    @if(auth()->user()->isAdminHo())
+                        <th>Cabang</th>
+                    @else
+                        <th>Stok</th>
+                    @endif
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -45,20 +53,26 @@
                         <td>{{ $item->nama_items }}</td>
                         <td>{{ $item->kategori ?? '-' }}</td>
                         <td>Rp {{ number_format($item->harga_items, 0, ',', '.') }}</td>
-                        <td>{{ $item->cabang->nama_cabang ?? '-' }}</td>
+                        @if(auth()->user()->isAdminHo())
+                            <td>{{ $item->cabang->nama_cabang ?? '-' }}</td>
+                        @else
+                            <td>{{ number_format((int) $item->stok_items, 0, ',', '.') }}</td>
+                        @endif
                         <td>
                             <a href="{{ route('items.show', $item) }}" class="btn btn-sm btn-info items-glossy" title="Lihat detail" aria-label="Lihat detail item">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('items.edit', $item) }}" class="btn btn-sm btn-warning items-glossy"><i class="fas fa-edit"></i></a>
-                            <form action="{{ route('items.destroy', $item) }}" method="POST" class="d-inline items-delete-form" data-item="{{ $item->nama_items }}">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-danger items-glossy"><i class="fas fa-trash"></i></button>
-                            </form>
+                            @if(auth()->user()->isAdminHo())
+                                <a href="{{ route('items.edit', $item) }}" class="btn btn-sm btn-warning items-glossy" title="Edit item" aria-label="Edit {{ $item->nama_items }}"><i class="fas fa-edit"></i></a>
+                                <form action="{{ route('items.destroy', $item) }}" method="POST" class="d-inline items-delete-form" data-item="{{ $item->nama_items }}">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger items-glossy" title="Hapus item" aria-label="Hapus {{ $item->nama_items }}"><i class="fas fa-trash"></i></button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted">Belum ada data item.</td></tr>
+                    <tr><td colspan="{{ auth()->user()->isAdminHo() ? 7 : 6 }}" class="text-center text-muted">Belum ada data item.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard') - GR_merch</title>
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}?v={{ filemtime(public_path('assets/images/Logo-TAG-favicon-16x16px.png')) }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
@@ -882,9 +882,16 @@
                             <i class="nav-icon fas fa-box"></i><p>Data Items</p>
                         </a>
                     </li>
+                    @if(auth()->user()->isAdminHo())
                     <li class="nav-item">
                         <a href="{{ route('stockin.index') }}" class="nav-link {{ request()->routeIs('stockin.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-arrow-down"></i><p>Barang Masuk</p>
+                        </a>
+                    </li>
+                    @endif
+                    <li class="nav-item">
+                        <a href="{{ route('transfers.index') }}" class="nav-link {{ request()->routeIs('transfers.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-exchange-alt"></i><p>{{ auth()->user()->isAdminHo() ? 'Transfer Barang' : 'Transfer Masuk' }}</p>
                         </a>
                     </li>
                     <li class="nav-item">
@@ -931,6 +938,8 @@
                         <i class="fas fa-box" aria-hidden="true"></i>
                     @elseif(request()->routeIs('stockin.*'))
                         <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                    @elseif(request()->routeIs('transfers.*'))
+                        <i class="fas fa-exchange-alt" aria-hidden="true"></i>
                     @elseif(request()->routeIs('stockout.*'))
                         <i class="fas fa-arrow-up" aria-hidden="true"></i>
                     @elseif(request()->routeIs('history.*'))

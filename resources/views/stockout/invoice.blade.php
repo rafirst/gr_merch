@@ -1,10 +1,18 @@
+@php
+    $invoiceAsset = static fn (string $path): string => ($isPdf ?? false)
+        ? str_replace('\\', '/', public_path($path))
+        : asset($path);
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice {{ $stockOut->id }} - GR_merch</title>
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}">
+    @unless($isPdf ?? false)
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}?v={{ filemtime(public_path('assets/images/Logo-TAG-favicon-16x16px.png')) }}">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    @endunless
     <style>
         :root {
             color-scheme: light;
@@ -27,7 +35,7 @@
             margin: 2rem auto;
             padding: 18mm;
             position: relative;
-            background: #ffffff url('{{ asset('assets/images/template-invoice.png') }}') center / cover no-repeat;
+            background: #ffffff url('{{ $invoiceAsset('assets/images/template-invoice-gr.png') }}') center / cover no-repeat;
             box-shadow: 0 8px 24px rgba(20, 34, 48, 0.16);
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
@@ -142,20 +150,37 @@
             border-top: 1px solid #dbe1e6;
         }
 
-        .print-button {
+        .invoice-actions {
             position: fixed;
             top: 1rem;
             right: 1rem;
-            padding: 0.7rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .print-button,
+        .download-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            padding: 0;
             border: 0;
             border-radius: 4px;
             background: #d70b18;
             color: #ffffff;
             cursor: pointer;
-            font-weight: 700;
+            font-size: 1rem;
         }
 
-        .topbar,
+        .download-button {
+            background: #263746;
+            color: #ffffff;
+            text-decoration: none;
+        }
+
         .invoice-heading,
         .summary,
         .footer-row {
@@ -165,7 +190,10 @@
         }
 
         .topbar {
-            align-items: flex-start;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: start;
+            gap: 1rem;
             min-height: 35mm;
         }
 
@@ -173,15 +201,31 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            min-width: 0;
         }
 
+        .brand,
         .gr-brand {
             display: block;
-            width: min(170px, 25vw);
+            width: min(140px, 100%);
             height: auto;
             max-height: 45px;
             object-fit: contain;
-            object-position: right top;
+        }
+
+        .gr-brand {
+            justify-self: center;
+            object-position: center top;
+        }
+
+                .topbar-middle {
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .topbar-right {
+                    display: flex;
+                    justify-content: flex-end;
         }
 
         .brand-caption,
@@ -195,11 +239,20 @@
         }
 
         .document-title {
+            position: relative;
             width: 100%;
-            margin-top: 1.2rem;
-            padding-top: 0.75rem;
-            border-top: 2px solid #e30613;
+            margin-top: 2.5rem;
+            padding-top: 1.9rem;
             text-align: left;
+        }
+
+        .document-title::before {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: calc(300% + 2rem);
+            border-top: 2px solid #e30613;
+            content: '';
         }
 
         .document-title h1 {
@@ -222,7 +275,8 @@
 
         .invoice-heading {
             align-items: flex-end;
-            padding-bottom: 0.8rem;
+            margin-top: 1rem;
+            padding-bottom: 1rem;
         }
 
         .branch strong,
@@ -244,7 +298,7 @@
         }
 
         .items-table td {
-            padding: 0.75rem;
+            padding: 0.9rem 0.75rem;
             vertical-align: top;
         }
 
@@ -269,7 +323,7 @@
         }
 
         .summary {
-            margin-top: 1.35rem;
+            margin-top: 1.8rem;
         }
 
         .summary-box {
@@ -335,32 +389,19 @@
         }
 
         .footer-row {
-            align-items: flex-end;
             position: absolute;
-            right: 18mm;
-            bottom: 12mm;
-            left: 18mm;
+            right: 0;
+            bottom: 5mm;
+            left: 10mm;
             margin: 0;
             padding: 0;
+            line-height: 0;
         }
 
-        .footer-slogan {
-            color: #ffffff;
-            font-size: 1rem;
-            font-style: italic;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            
-        }
-
-        .footer-slogan span {
-            color: #e30613;
-        }
-
-        .footer-detail {
-            color: rgba(255, 255, 255, 0.78);
-            font-size: 0.7rem;
-            text-align: right;
+        .footer-image {
+            display: block;
+            width: 95%;
+            height: auto;
         }
 
         @media (max-width: 600px) {
@@ -373,27 +414,33 @@
 
             .invoice-header,
             .invoice-meta,
-            .topbar,
-            .invoice-heading,
-            .footer-row {
+            .invoice-heading {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
-            .document-title,
-            .footer-detail {
+            .topbar {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.5rem;
+                min-height: auto;
+            }
+
+            .brand,
+            .gr-brand {
+                max-height: 35px;
+            }
+
+            .document-title {
                 text-align: left;
             }
 
-            .footer-row {
-                right: 1.25rem;
-                bottom: 1.25rem;
-                left: 1.25rem;
+            .document-title::before {
+                width: calc(300% + 1rem);
             }
 
-            .print-button {
+            .invoice-actions {
                 position: static;
-                display: block;
+                justify-content: center;
                 margin: 1rem auto;
             }
         }
@@ -406,32 +453,196 @@
 
             body {
                 background: #ffffff;
+                font-family: Arial, sans-serif;
             }
 
             .invoice {
-                width: 100%;
+                width: 210mm;
                 min-height: 297mm;
                 margin: 0;
                 padding: 18mm;
                 box-shadow: none;
-                background-size: cover;
                 background-position: center top;
+                background-size: cover;
             }
 
             .footer-row {
-                right: 18mm;
-                bottom: 10mm;
-                left: 18mm;
+                right: 0;
+                bottom: 5mm;
+                left: 10mm;
             }
 
-            .print-button {
+            .invoice-actions {
                 display: none;
+            }
+
+            body.pdf-render .invoice {
+                width: 174mm;
+                min-height: 261mm;
+                padding: 18mm;
+                background-image: url('{{ $invoiceAsset('assets/images/template-invoice-gr.png') }}');
+                background-size: 100% 100%;
+                background-repeat: no-repeat;
+            }
+
+            body.pdf-render .topbar {
+                display: table;
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            body.pdf-render .topbar-left,
+            body.pdf-render .topbar-middle,
+            body.pdf-render .topbar-right {
+                display: table-cell;
+                width: 33.333%;
+                vertical-align: top;
+            }
+
+            body.pdf-render .topbar-middle {
+                text-align: center;
+            }
+
+            body.pdf-render .topbar-right {
+                text-align: right;
+            }
+
+            body.pdf-render .brand,
+            body.pdf-render .gr-brand {
+                width: 140px;
+                max-height: 45px;
+            }
+
+            body.pdf-render .gr-brand {
+                display: block;
+                margin: 0 auto;
+            }
+
+            body.pdf-render .topbar-right .brand {
+                margin-left: auto;
+            }
+
+            body.pdf-render .document-title::before {
+                width: 300%;
+            }
+
+            body.pdf-render .invoice-heading {
+                display: table;
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            body.pdf-render .invoice-heading > p {
+                display: table-cell;
+                vertical-align: top;
+                padding-right: 4mm;
+            }
+
+            body.pdf-render .invoice-heading > p:first-child {
+                width: 27%;
+            }
+
+            body.pdf-render .invoice-heading > p:nth-child(2) {
+                width: 43%;
+            }
+
+            body.pdf-render .invoice-heading > p:last-child {
+                width: 30%;
+                padding-right: 0;
+            }
+
+            body.pdf-render .invoice-heading .branch strong {
+                display: block;
+                margin-bottom: 1mm;
+                line-height: 1.2;
+            }
+
+            body.pdf-render .items-table {
+                table-layout: fixed;
+            }
+
+            body.pdf-render .items-table th:first-child,
+            body.pdf-render .items-table td:first-child {
+                width: 48%;
+            }
+
+            body.pdf-render .items-table th:nth-child(2),
+            body.pdf-render .items-table td:nth-child(2),
+            body.pdf-render .items-table th:last-child,
+            body.pdf-render .items-table td:last-child {
+                width: 20%;
+            }
+
+            body.pdf-render .items-table th:nth-child(3),
+            body.pdf-render .items-table td:nth-child(3) {
+                width: 12%;
+            }
+
+            body.pdf-render .summary-row {
+                display: table;
+                width: 100%;
+                table-layout: fixed;
+            }
+
+            body.pdf-render .summary-row span {
+                display: table-cell;
+                vertical-align: middle;
+            }
+
+            body.pdf-render .summary-row span:last-child {
+                text-align: right;
+            }
+
+            body.pdf-render .summary-row.grand-total {
+                background: none;
+                padding: 0;
+                font-family: "DejaVu Sans", sans-serif;
+                font-size: 0.88rem;
+                font-weight: 700;
+                line-height: 1.35;
+            }
+
+            body.pdf-render .summary-row.grand-total span:first-child {
+                width: 52%;
+                border-radius: 5px 0 0 5px;
+                background: #e8ebef;
+                padding-top: 0.7rem;
+                padding-bottom: 0.7rem;
+                padding-left: 0.7rem;
+                font-family: "DejaVu Sans", sans-serif;
+                font-size: 0.88rem;
+                font-weight: 700;
+                line-height: 1.35;
+                white-space: nowrap;
+            }
+
+            body.pdf-render .summary-row.grand-total span:last-child {
+                width: 48%;
+                border-radius: 0 5px 5px 0;
+                background: #e30613;
+                padding-top: 0.7rem;
+                padding-bottom: 0.7rem;
+                padding-right: 0.7rem;
+                color: #ffffff;
+                font-family: "DejaVu Sans", sans-serif;
+                font-size: 0.88rem;
+                font-weight: 700;
+                line-height: 1.35;
             }
         }
     </style>
 </head>
-<body>
-    <button type="button" class="print-button" onclick="window.print()">Cetak Invoice</button>
+<body class="{{ ($isPdf ?? false) ? 'pdf-render' : '' }}">
+    @unless($isPdf ?? false)
+        <div class="invoice-actions">
+            <button type="button" class="print-button" onclick="window.print()" title="Cetak Invoice" aria-label="Cetak Invoice">
+                <i class="fas fa-print" aria-hidden="true"></i>
+            </button>
+            <a href="{{ route('stockout.invoice.download', $stockOut, false) }}" class="download-button" title="Download Invoice" aria-label="Download Invoice">
+                <i class="fas fa-download" aria-hidden="true"></i>
+            </a>
+        </div>
+    @endunless
 
     @php
         $subtotal = $stockOuts->sum(function ($row) {
@@ -439,19 +650,18 @@
 
             return $unitPrice * (int) $row->jumlah;
         });
-        $voucherAmounts = ['500k' => 500000, '1jt' => 1000000];
-        $voucherAmount = $stockOut->jenis === 'DO' ? ($voucherAmounts[$stockOut->voucher ?? ''] ?? 0) : 0;
         $hasTransactionTotal = $stockOut->jenis === 'penjualan' || $stockOut->jenis === 'DO';
-        $discountAmount = $stockOut->jenis === 'DO' ? $voucherAmount : ($hasTransactionTotal ? $subtotal - $stockOuts->sum(fn ($row) => (float) ($row->total ?? 0)) : null);
+        $ppnAmount = $hasTransactionTotal ? (int) round($subtotal * 0.11) : null;
+        $discountAmount = $stockOut->jenis === 'DO' ? 0 : ($hasTransactionTotal ? $subtotal - $stockOuts->sum(fn ($row) => (float) ($row->total ?? 0)) : null);
         $totalAkhir = $stockOut->jenis === 'DO'
-            ? max(0, $subtotal - $voucherAmount)
-            : $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0);
+            ? $subtotal + ($ppnAmount ?? 0)
+            : $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0) + ($ppnAmount ?? 0);
     @endphp
 
     <main class="invoice">
         <header class="topbar">
             <div class="topbar-left">
-                <img src="{{ asset('assets/images/Logo TAG.png') }}" alt="TAG Tunas Auto Graha" class="brand">
+                <img src="{{ $invoiceAsset('assets/images/Logo-Toyota.png') }}" alt="Toyota" class="brand">
                 {{-- <p class="brand-caption">Authorized Toyota Dealer</p> --}}
                 <div class="document-title">
                     <h1>INVOICE</h1>
@@ -459,7 +669,12 @@
                     <p class="document-date">Tanggal: {{ $stockOut->tanggal?->format('d-m-Y') ?? '-' }}</p>
                 </div>
             </div>
-            <img src="{{ asset('assets/images/gr-300-px.png') }}" alt="GR Toyota Gazoo Racing" class="gr-brand">
+            <div class="topbar-middle">
+                <img src="{{ $invoiceAsset('assets/images/gr-300-px.png') }}" alt="GR Toyota Gazoo Racing" class="gr-brand">
+            </div>
+            <div class="topbar-right">
+                <img src="{{ $invoiceAsset('assets/images/Logo TAG.png') }}" alt="TAG Tunas Auto Graha" class="brand">
+            </div>
         </header>
 
         <section class="invoice-heading">
@@ -467,8 +682,10 @@
             <p class="branch"><strong>Customer:</strong> {{ $stockOut->nama_customer ?: '-' }}</p>
             @if($stockOut->jenis === 'penjualan')
                 <p class="branch"><strong>No. Telpon:</strong> {{ $stockOut->nomor_telepon ?: '-' }}</p>
-            @else
-                <p class="branch"><strong>No. SPK:</strong> {{ $stockOut->nomor_spk ?: '-' }}</p>
+            @elseif($stockOut->jenis === 'DO')
+                <p class="branch"><strong>No. SPK:</strong> {{ $stockOut->nomor_spk ?: '-' }}<br><strong>Paket Bundling:</strong> {{ match ($stockOut->paket_bundling) { 'paket_a' => 'Paket A', 'paket_b' => 'Paket B', 'paket_c' => 'Paket C', default => '-' } }}</p>
+            @elseif($stockOut->jenis === 'request')
+                <p class="branch"><strong>No. IM:</strong> {{ $stockOut->nomor_im ?: '-' }}</p>
             @endif
             {{-- <p class="transaction-info"><strong>Jenis Transaksi:</strong> {{ ucfirst($stockOut->jenis) }} &nbsp; | &nbsp; <strong>Status:</strong> {{ ucfirst($stockOut->status) }}</p> --}}
         </section>
@@ -503,11 +720,17 @@
         <section class="summary">
             <div class="summary-box">
                 <div class="summary-row total-before">
-                    <span>Total</span>
+                    <span>Subtotal</span>
                     <span>{{ $hasTransactionTotal ? 'Rp '.number_format($subtotal, 0, ',', '.') : 'Non-penjualan' }}</span>
                 </div>
+                @if($hasTransactionTotal)
+                    <div class="summary-row">
+                        <span>PPN 11%</span>
+                        <span>Rp {{ number_format($ppnAmount, 0, ',', '.') }}</span>
+                    </div>
+                @endif
                 <div class="summary-row">
-                    <span>{{ $stockOut->jenis === 'DO' ? 'Potongan' : 'Discount '.rtrim(rtrim(number_format($stockOut->discount ?? 0, 2, '.', ''), '0'), '.').'%' }}</span>
+                    <span>{{ $stockOut->jenis === 'DO' ? 'Potongan (0%)' : 'Discount '.rtrim(rtrim(number_format($stockOut->discount ?? 0, 2, '.', ''), '0'), '.').'%' }}</span>
                     <span>{{ $discountAmount !== null ? 'Rp '.number_format($discountAmount, 0, ',', '.') : '-' }}</span>
                 </div>
                 <div class="summary-row grand-total">
@@ -517,7 +740,7 @@
             </div>
         </section>
 
-        <section class="notes">
+        {{-- <section class="notes">
             <h2 class="section-title">Keterangan</h2>
             <div class="notes-box">
                 <p><strong>Jenis Transaksi:</strong> {{ ucfirst($stockOut->jenis) }}</p>
@@ -530,18 +753,19 @@
                 <p><strong>Diproses oleh:</strong> {{ $stockOut->user->name ?? '-' }}</p>
             @endif
             </div>
-        </section>
+        </section> --}}
 
         <footer class="footer-row">
-            <div class="footer-slogan"><span>TAG</span> Memberi Lebih ...</div>
-            {{-- <div class="footer-detail">{{ $stockOut->cabang->nama_cabang ?? 'TAG Head Office' }}<br>GR merchandise</div> --}}
+            <img src="{{ $invoiceAsset('assets/images/sosmed-tag.png') }}" alt="Media sosial TAG" class="footer-image">
         </footer>
     </main>
 
-    <script>
-        window.addEventListener('load', function () {
-            window.print();
-        });
-    </script>
+    @unless($isPdf ?? false)
+        <script>
+            window.addEventListener('load', function () {
+                window.print();
+            });
+        </script>
+    @endunless
 </body>
 </html>

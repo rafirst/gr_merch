@@ -18,7 +18,7 @@
             <a href="{{ route('stockin.index') }}" class="btn stockin-reset-button" title="Reset filter" aria-label="Reset filter"><i class="fas fa-undo-alt"></i></a>
         </form>
         <div class="stockin-header-actions">
-              <a href="{{ route('stockin.export') }}" class="btn btn-success stockin-toolbar-button stockin-export-button" title="Export barang masuk" aria-label="Export barang masuk"><i class="fas fa-file-excel"></i></a>
+              <a href="{{ route('stockin.export') }}" class="btn btn-success stockin-toolbar-button stockin-export-button" title="Export barang masuk" aria-label="Export barang masuk"><i class="fas fa-file-pdf"></i></a>
               <a href="{{ route('stockin.import.form') }}" class="btn btn-info stockin-toolbar-button stockin-import-button" title="Import barang masuk" aria-label="Import barang masuk"><i class="fas fa-file-import"></i></a>
               <a href="{{ route('stockin.create') }}" class="btn btn-primary stockin-toolbar-button stockin-create-button" title="Tambah barang masuk" aria-label="Tambah barang masuk"><i class="fas fa-plus"></i></a>
         </div>

@@ -21,11 +21,11 @@ class ApprovalController extends Controller
                 'model' => $stockOut,
                 'item' => $stockOut->item->nama_items ?? '-',
                 'requester' => $stockOut->user->name ?? '-',
-                'type' => 'Approval Transaksi',
+                'type' => $stockOut->jenis === 'penjualan' ? 'Penjualan TAG Member' : 'Request',
                 'detail_route' => route('approval.show.stockout', $stockOut),
                 'approve_route' => route('approval.approve', $stockOut),
                 'reject_route' => route('approval.reject', $stockOut),
-                'item_label' => $stockOut->item->nama_items ?? 'transaksi ini',
+                'item_label' => ($stockOut->jenis === 'penjualan' ? 'penjualan TAG Member ' : 'request ').($stockOut->item->nama_items ?? 'transaksi ini'),
             ])
             ->toBase();
         $stockInRequests = StockInEditRequest::with(['oldItem', 'newItem', 'stockIn', 'requester'])
@@ -57,7 +57,7 @@ class ApprovalController extends Controller
         $stockOut->load(['item', 'cabang', 'user']);
 
         return view('approval.show', [
-            'approvalType' => 'request',
+            'approvalType' => $stockOut->jenis === 'penjualan' ? 'penjualan_member' : 'request',
             'stockOut' => $stockOut,
             'editRequest' => null,
         ]);

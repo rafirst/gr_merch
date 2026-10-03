@@ -12,16 +12,23 @@
     <div class="card-body">
         @php
             $subtotal = $stockOuts->sum(function ($row) {
-                return $row->harga_jual !== null ? (float) $row->harga_jual * (int) $row->jumlah : 0;
+                $unitPrice = $row->harga_jual !== null
+                    ? (float) $row->harga_jual
+                    : ($row->jenis === 'DO' ? (float) ($row->item->harga_items ?? 0) : 0);
+
+                return $unitPrice * (int) $row->jumlah;
             });
-            $totalAkhir = $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0);
-            $voucherAmounts = ['500k' => 500000, '1jt' => 1000000];
+            $ppnAmount = $stockOut->jenis === 'DO' ? (int) round($subtotal * 0.11) : 0;
+            $totalAkhir = $stockOut->jenis === 'DO'
+                ? $subtotal + $ppnAmount
+                : $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0);
             $discountAmount = $stockOut->jenis === 'DO'
-                ? ($voucherAmounts[$stockOut->voucher ?? ''] ?? 0)
+                ? 0
                 : $subtotal - $totalAkhir;
         @endphp
 
         <div class="stockout-section">
+            <h4 class="stockout-section-title">Data Customer</h4>
             <table class="stockout-table stockout-info-table">
                 <thead>
                     <tr>
@@ -31,11 +38,38 @@
                 </thead>
                 <tbody>
                     <tr><td>Nama Customer</td><td>{{ $stockOut->nama_customer ?: '-' }}</td></tr>
+                    <tr><td>NIK KTP</td><td>{{ $stockOut->nik_ktp ?: '-' }}</td></tr>
                     <tr><td>Nomor Telpon</td><td>{{ $stockOut->nomor_telepon ?: '-' }}</td></tr>
-                    <tr><td>Nomor SPK</td><td>{{ $stockOut->nomor_spk ?: '-' }}</td></tr>
+                    <tr><td>Alamat</td><td>{{ $stockOut->alamat_customer ?: '-' }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="stockout-section">
+            <h4 class="stockout-section-title">Data Transaksi</h4>
+            <table class="stockout-table stockout-info-table">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if($stockOut->jenis === 'request')
+                        <tr><td>Nomor IM</td><td>{{ $stockOut->nomor_im ?: '-' }}</td></tr>
+                    @elseif($stockOut->jenis === 'DO')
+                        <tr><td>Nomor SPK</td><td>{{ $stockOut->nomor_spk ?: '-' }}</td></tr>
+                        <tr><td>Paket Bundling</td><td>{{ match ($stockOut->paket_bundling) { 'paket_a' => 'Paket A', 'paket_b' => 'Paket B', 'paket_c' => 'Paket C', default => '-' } }}</td></tr>
+                    @endif
                     <tr><td>PIC Penjualan</td><td>{{ $stockOut->pic_penjualan ?: '-' }}</td></tr>
                     <tr><td>Cabang</td><td>{{ $stockOut->cabang->nama_cabang ?? '-' }}</td></tr>
                     <tr><td>Jenis Transaksi</td><td>{{ ucfirst($stockOut->jenis) }}</td></tr>
+                    @if(in_array($stockOut->jenis, ['penjualan', 'DO'], true))
+                        <tr>
+                            <td>Jenis Pembayaran</td>
+                            <td>{{ match ($stockOut->jenis_pembayaran) { 'qris' => 'QRIS', 'transfer' => 'Transfer', default => '-' } }}</td>
+                        </tr>
+                    @endif
                     <tr><td>Tanggal</td><td>{{ $stockOut->tanggal?->format('d-m-Y') ?? '-' }}</td></tr>
                     <tr><td>Status</td><td>{{ ucfirst($stockOut->status) }}</td></tr>
                     <tr><td>Oleh</td><td>{{ $stockOut->user->name ?? '-' }}</td></tr>
@@ -65,9 +99,9 @@
                             <tr>
                                 <td>{{ $row->item->nama_items ?? '-' }}</td>
                                 <td>{{ $row->item->kode_items ?? '-' }}</td>
-                                <td>{{ $row->harga_jual !== null ? 'Rp '.number_format($row->harga_jual, 0, ',', '.') : '-' }}</td>
+                                <td>{{ $row->harga_jual !== null ? 'Rp '.number_format($row->harga_jual, 0, ',', '.') : ($stockOut->jenis === 'DO' ? 'Rp '.number_format($row->item->harga_items ?? 0, 0, ',', '.') : '-') }}</td>
                                 <td>{{ $row->jumlah }} {{ $row->item->satuan ?? '' }}</td>
-                                <td>{{ $row->total !== null ? 'Rp '.number_format($row->total, 0, ',', '.') : '-' }}</td>
+                                <td>{{ $row->total !== null ? 'Rp '.number_format($row->total, 0, ',', '.') : ($stockOut->jenis === 'DO' ? 'Rp '.number_format(($row->item->harga_items ?? 0) * $row->jumlah, 0, ',', '.') : '-') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
