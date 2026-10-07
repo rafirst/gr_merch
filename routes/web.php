@@ -53,14 +53,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/stock-out/create', [StockOutController::class, 'create'])->name('stockout.create');
     Route::get('/stock-out/{stockOut}/invoice/download', [StockOutController::class, 'downloadInvoice'])->name('stockout.invoice.download');
     Route::get('/stock-out/{stockOut}/invoice', [StockOutController::class, 'invoice'])->name('stockout.invoice');
+    Route::get('/stock-out/{stockOut}/edit', [StockOutController::class, 'edit'])->name('stockout.edit');
     Route::get('/stock-out/{stockOut}', [StockOutController::class, 'show'])->name('stockout.show');
     Route::post('/stock-out', [StockOutController::class, 'store'])->name('stockout.store');
+    Route::put('/stock-out/{stockOut}', [StockOutController::class, 'update'])->name('stockout.update');
+    Route::post('/stock-out/{stockOut}/bukti-pembayaran', [StockOutController::class, 'updatePaymentProof'])->name('stockout.bukti-pembayaran.update');
 
     // Histori
     Route::get('/history', [HistoryController::class, 'index'])->name('history.index');
     Route::get('/history/show/{type}/{id}', [HistoryController::class, 'show'])->name('history.show');
     Route::get('/history-export', [ExportImportController::class, 'exportHistory'])->name('history.export');
-    Route::get('/history-export/excel', [ExportImportController::class, 'exportHistoryExcel'])->name('history.export.excel');
+    Route::get('/history-export/excel', [ExportImportController::class, 'exportHistoryExcel'])
+        ->middleware('role:admin_ho')->name('history.export.excel');
 
     // ===== Khusus Admin Pusat =====
     Route::middleware('role:admin_ho')->group(function () {

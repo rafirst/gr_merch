@@ -46,6 +46,8 @@ class ExportImportController extends Controller
 
     public function exportHistoryExcel()
     {
+        abort_unless(auth()->user()?->isAdminHo(), 403, 'Hanya administrator yang dapat mengekspor Excel.');
+
         return Excel::download(
             new HistoryExport,
             'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.xlsx',

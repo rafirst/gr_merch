@@ -35,7 +35,7 @@
             margin: 2rem auto;
             padding: 18mm;
             position: relative;
-            background: #ffffff url('{{ $invoiceAsset('assets/images/template-invoice-gr.png') }}') center / cover no-repeat;
+            background: #ffffff url('{{ $invoiceAsset('assets/images/invoice-gr-template.png') }}') center / cover no-repeat;
             box-shadow: 0 8px 24px rgba(20, 34, 48, 0.16);
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
@@ -388,6 +388,76 @@
             color: #17212b;
         }
 
+        .transfer-info {
+            display: flex;
+            align-items: center;
+            gap: 0.9rem;
+            width: min(100%, 365px);
+            min-height: 116px;
+            margin-top: 0.75rem;
+            padding: 0.75rem 3.5rem 0.75rem 0.75rem;
+            position: relative;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .payment-title {
+            margin-bottom: 0.35rem;
+        }
+
+        .payment-intro {
+            margin: 0;
+            color: #667381;
+            font-size: 0.84rem;
+        }
+
+        .transfer-info-shape {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .transfer-info-icon {
+            display: flex;
+            position: relative;
+            flex: 0 0 42px;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #dcecff;
+            z-index: 1;
+        }
+
+        .transfer-info-body {
+            position: relative;
+            min-width: 0;
+            z-index: 1;
+        }
+
+        .transfer-info-label {
+            margin: 0;
+            color: #667381;
+            font-size: 0.8rem;
+        }
+
+        .transfer-info-account {
+            max-width: 8.5rem;
+            margin: 0.2rem 0 0;
+            color: #17212b;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .transfer-info-owner {
+            margin: 0.15rem 0 0;
+            color: #4e5b68;
+            font-size: 0.84rem;
+        }
+
         .footer-row {
             position: absolute;
             right: 0;
@@ -480,7 +550,7 @@
                 width: 174mm;
                 min-height: 261mm;
                 padding: 18mm;
-                background-image: url('{{ $invoiceAsset('assets/images/template-invoice-gr.png') }}');
+                background-image: url('{{ $invoiceAsset('assets/images/invoice-gr-template.png') }}');
                 background-size: 100% 100%;
                 background-repeat: no-repeat;
             }
@@ -653,9 +723,24 @@
         $hasTransactionTotal = $stockOut->jenis === 'penjualan' || $stockOut->jenis === 'DO';
         $ppnAmount = $hasTransactionTotal ? (int) round($subtotal * 0.11) : null;
         $discountAmount = $stockOut->jenis === 'DO' ? 0 : ($hasTransactionTotal ? $subtotal - $stockOuts->sum(fn ($row) => (float) ($row->total ?? 0)) : null);
+        $discountLabel = $stockOut->jenis === 'DO'
+            ? 'Potongan (0%)'
+            : ($stockOut->jenis === 'penjualan' ? $stockOut->discountLabel() : 'Discount '.rtrim(rtrim(number_format($stockOut->discount ?? 0, 2, '.', ''), '0'), '.').'%');
         $totalAkhir = $stockOut->jenis === 'DO'
             ? $subtotal + ($ppnAmount ?? 0)
             : $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0) + ($ppnAmount ?? 0);
+
+        // Rekening transfer per cabang, sama dengan data di halaman create Barang Keluar.
+        $transferAccounts = [
+            'PLG' => 'BCA 0216198888',
+            'POL' => 'BCA 0216198888',
+            'THO' => 'BCA 0216198888',
+            'PRB' => 'BCA 0218829999',
+            'TME' => 'BCA 0218829999',
+            'LLG' => 'BCA 0217817777',
+        ];
+        $transferAccount = $transferAccounts[$stockOut->cabang->kode_cabang ?? ''] ?? null;
+        $showTransferInfo = $transferAccount !== null && $stockOut->jenis_pembayaran === 'transfer';
     @endphp
 
     <main class="invoice">
@@ -679,8 +764,8 @@
 
         <section class="invoice-heading">
             <p class="branch"><strong>Cabang:</strong> {{ $stockOut->cabang->nama_cabang ?? '-' }}</p>
-            <p class="branch"><strong>Customer:</strong> {{ $stockOut->nama_customer ?: '-' }}</p>
             @if($stockOut->jenis === 'penjualan')
+                <p class="branch"><strong>Customer:</strong> {{ $stockOut->nama_customer ?: '-' }}</p>
                 <p class="branch"><strong>No. Telpon:</strong> {{ $stockOut->nomor_telepon ?: '-' }}</p>
             @elseif($stockOut->jenis === 'DO')
                 <p class="branch"><strong>No. SPK:</strong> {{ $stockOut->nomor_spk ?: '-' }}<br><strong>Paket Bundling:</strong> {{ match ($stockOut->paket_bundling) { 'paket_a' => 'Paket A', 'paket_b' => 'Paket B', 'paket_c' => 'Paket C', default => '-' } }}</p>
@@ -723,22 +808,44 @@
                     <span>Subtotal</span>
                     <span>{{ $hasTransactionTotal ? 'Rp '.number_format($subtotal, 0, ',', '.') : 'Non-penjualan' }}</span>
                 </div>
+                <div class="summary-row">
+                    <span>{{ $discountLabel }}</span>
+                    <span>{{ $discountAmount !== null ? 'Rp '.number_format($discountAmount, 0, ',', '.') : '-' }}</span>
+                </div>
                 @if($hasTransactionTotal)
                     <div class="summary-row">
                         <span>PPN 11%</span>
                         <span>Rp {{ number_format($ppnAmount, 0, ',', '.') }}</span>
                     </div>
                 @endif
-                <div class="summary-row">
-                    <span>{{ $stockOut->jenis === 'DO' ? 'Potongan (0%)' : 'Discount '.rtrim(rtrim(number_format($stockOut->discount ?? 0, 2, '.', ''), '0'), '.').'%' }}</span>
-                    <span>{{ $discountAmount !== null ? 'Rp '.number_format($discountAmount, 0, ',', '.') : '-' }}</span>
-                </div>
                 <div class="summary-row grand-total">
                     <span>Total Keseluruhan</span>
                     <span>{{ $hasTransactionTotal ? 'Rp '.number_format($totalAkhir, 0, ',', '.') : 'Non-penjualan' }}</span>
                 </div>
             </div>
         </section>
+
+        @if($showTransferInfo)
+            <h2 class="section-title payment-title">Pembayaran</h2>
+            <p class="payment-intro">Silakan melakukan pembayaran melalui transfer ke:</p>
+            <section class="transfer-info" aria-label="Informasi transfer bank">
+                <svg class="transfer-info-shape" viewBox="0 0 365 116" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                    <path d="M 5 1 H 329.5 Q 336 1 334.3 7.3 L 306.7 108.7 Q 305 115 298.5 115 H 5 Q 1 115 1 111 V 5 Q 1 1 5 1 Z" fill="#f4f9ff" stroke="#c0c0c0" stroke-width="1"></path>
+                </svg>
+                <div class="transfer-info-icon">
+                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1565c0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" role="img" aria-hidden="true" focusable="false">
+                        <path d="M3 10 12 4l9 6"></path>
+                        <path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8"></path>
+                        <path d="M3 20h18"></path>
+                    </svg>
+                </div>
+                <div class="transfer-info-body">
+                    <p class="transfer-info-label">Transfer Bank </p>
+                    <p class="transfer-info-account">{{ $transferAccount }}</p>
+                    <p class="transfer-info-owner">a.n Tunas Auto Graha</p>
+                </div>
+            </section>
+        @endif
 
         {{-- <section class="notes">
             <h2 class="section-title">Keterangan</h2>

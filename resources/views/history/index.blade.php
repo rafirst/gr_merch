@@ -68,7 +68,7 @@
 
     @elseif(($tipe ?? null) === 'out')
         <table class="table table-striped mb-0 history-data-table history-out-table">
-            <thead><tr><th>Tanggal <i class="fas fa-sort ml-1"></i></th><th>Item <i class="fas fa-sort ml-1"></i></th><th>Jumlah <i class="fas fa-sort ml-1"></i></th><th>Jenis</th><th>Status</th><th>Oleh</th><th>Pembayaran</th><th class="text-center">Aksi</th></tr></thead>
+            <thead><tr><th>Tanggal <i class="fas fa-sort ml-1"></i></th><th>Item <i class="fas fa-sort ml-1"></i></th><th>Jumlah <i class="fas fa-sort ml-1"></i></th><th>Jenis</th><th>Status</th><th>Kode Pembayaran</th><th>Pembayaran</th><th class="text-center">Aksi</th></tr></thead>
             <tbody>
             @forelse($riwayat as $row)
                 <tr>
@@ -77,7 +77,13 @@
                     <td><span class="badge history-quantity-badge history-out-badge">-{{ $row->jumlah }}</span></td>
                     <td><span class="badge history-type-badge">{{ ucfirst($row->jenis) }}</span></td>
                     <td><span class="badge history-status-badge">{{ ucfirst($row->status) }}</span></td>
-                    <td>{{ $row->user->name ?? '-' }}</td>
+                    <td>
+                        @if($row->kode_pembayaran)
+                            <span class="history-payment-code" title="{{ $row->kode_pembayaran }}">{{ $row->kode_pembayaran }}</span>
+                        @else
+                            <span class="history-payment-code-empty">-</span>
+                        @endif
+                    </td>
                     <td>{{ $row->jenis_pembayaran ? ucfirst($row->jenis_pembayaran) : '-' }}</td>
                     <td class="text-center"><a href="{{ route('history.show', ['type' => 'out', 'id' => $row->id]) }}" class="btn btn-sm history-action-button" title="Lihat detail" aria-label="Lihat detail histori barang keluar"><i class="fas fa-eye"></i></a></td>
                 </tr>
@@ -168,11 +174,13 @@
                 <span class="history-export-option-copy"><strong>Export PDF</strong><small>Unduh laporan dalam format PDF</small></span>
                 <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
             </a>
+            @if(auth()->user()?->isAdminHo())
             <a href="{{ route('history.export.excel') }}" class="history-export-option history-export-option-excel">
                 <span class="history-export-option-icon"><i class="fas fa-file-excel" aria-hidden="true"></i></span>
                 <span class="history-export-option-copy"><strong>Export Excel</strong><small>Unduh data dalam format XLSX</small></span>
                 <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
             </a>
+            @endif
         </div>
         <button type="button" class="history-export-cancel" data-history-export-close>Batal</button>
     </section>
@@ -598,6 +606,24 @@
 
     .history-status-badge {
         background: linear-gradient(145deg, #5be58a 0%, #19ae53 48%, #078138 100%);
+    }
+
+    .history-payment-code {
+        display: inline-block;
+        max-width: 190px;
+        overflow: hidden;
+        color: #7ef0aa;
+        font-family: SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .history-payment-code-empty {
+        color: rgba(244, 247, 250, 0.45);
     }
 
     .history-data-table tbody small {

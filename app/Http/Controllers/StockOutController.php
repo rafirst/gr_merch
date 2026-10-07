@@ -12,7 +12,10 @@ use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class StockOutController extends Controller
 {
@@ -90,6 +93,216 @@ class StockOutController extends Controller
         return view('stockout.show', compact('stockOut', 'stockOuts'));
     }
 
+    public function edit(StockOut $stockOut)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+            abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
+        }
+
+        if ($stockOut->status === 'rejected') {
+            abort(403, 'Transaksi yang ditolak tidak dapat diubah.');
+        }
+
+        $stockOut->load(['item', 'cabang', 'user', 'approver']);
+        $stockOuts = $stockOut->batch_id
+            ? StockOut::with(['item', 'cabang', 'user', 'approver'])->where('batch_id', $stockOut->batch_id)->orderBy('id')->get()
+            : collect([$stockOut]);
+        $items = $user->isAdminHo()
+            ? Item::with('cabang')->orderBy('nama_items')->get()
+            : Item::with('cabang')->where('cabang_id', $user->cabang_id)->orderBy('nama_items')->get();
+
+        return view('stockout.edit', compact('stockOut', 'stockOuts', 'items'));
+    }
+
+    public function update(Request $request, StockOut $stockOut)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+            abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
+        }
+
+        if ($stockOut->status === 'rejected') {
+            abort(403, 'Transaksi yang ditolak tidak dapat diubah.');
+        }
+
+        $data = $request->validate([
+            'item_id' => 'required|array|min:1',
+            'item_id.*' => 'required|exists:items,id',
+            'jumlah' => 'required|array|min:1',
+            'jumlah.*' => 'required|integer|min:1',
+            'pic_penjualan' => 'nullable|string|max:255',
+            'nomor_spk' => 'nullable|string|max:100',
+            'nomor_im' => 'nullable|string|max:100',
+            'jenis_pembayaran' => 'nullable|in:qris,transfer',
+            'nama_customer' => 'nullable|string|max:255',
+            'nik_ktp' => 'nullable|string|max:16',
+            'jabatan' => 'nullable|string|max:100',
+            'nomor_telepon' => 'nullable|string|max:30',
+            'alamat_customer' => 'nullable|string|max:2000',
+            'keterangan' => 'nullable|string|max:2000',
+        ], [], [
+            'jumlah' => 'jumlah',
+        ]);
+
+        $batchId = $stockOut->batch_id;
+        $batchRows = $batchId
+            ? StockOut::with('item')->where('batch_id', $batchId)->orderBy('id')->get()
+            : StockOut::with('item')->whereKey($stockOut->id)->get();
+
+        $items = Item::whereIn('id', $data['item_id'])->get()->keyBy('id');
+
+        foreach ($data['item_id'] as $index => $itemId) {
+            $item = $items->get($itemId);
+
+            if (! $item) {
+                return back()->withErrors(['item_id' => 'Item tidak ditemukan.'])->withInput();
+            }
+
+            if (! $user->isAdminHo() && $item->cabang_id !== $user->cabang_id) {
+                abort(403, 'Anda tidak memiliki akses ke item cabang lain.');
+            }
+        }
+
+        DB::transaction(function () use ($data, $stockOut, $batchRows, $items) {
+            $isApproved = $stockOut->status === 'approved';
+
+            if ($isApproved) {
+                foreach ($batchRows as $row) {
+                    if ($row->item) {
+                        $row->item->increment('stok_items', $row->jumlah);
+                    }
+                }
+
+                $items = $items->map(fn ($item) => $item->fresh());
+            }
+
+            $firstRow = $batchRows->first() ?? $stockOut;
+            $isPenjualan = $firstRow->jenis === 'penjualan';
+            $discountRate = (float) ($firstRow->discount ?? 0);
+            $shared = [
+                'jenis_pembayaran' => $data['jenis_pembayaran'] ?? $firstRow->jenis_pembayaran,
+                'nomor_spk' => $data['nomor_spk'] ?? $firstRow->nomor_spk,
+                'nomor_im' => $data['nomor_im'] ?? $firstRow->nomor_im,
+                'nama_customer' => $data['nama_customer'] ?? $firstRow->nama_customer,
+                'nik_ktp' => $firstRow->isRetailNonKtpSale() ? null : ($data['nik_ktp'] ?? $firstRow->nik_ktp),
+                'jabatan' => $data['jabatan'] ?? $firstRow->jabatan,
+                'nomor_telepon' => $data['nomor_telepon'] ?? $firstRow->nomor_telepon,
+                'alamat_customer' => $data['alamat_customer'] ?? $firstRow->alamat_customer,
+                'pic_penjualan' => $data['pic_penjualan'] ?? $firstRow->pic_penjualan,
+                'keterangan' => $data['keterangan'] ?? $firstRow->keterangan,
+            ];
+
+            $remainingIds = [];
+            $orderedRows = $batchRows->values();
+
+            foreach ($data['item_id'] as $index => $itemId) {
+                $item = $items->get($itemId);
+                $quantity = (int) $data['jumlah'][$index];
+                $row = $orderedRows->shift();
+
+                if ($stockOut->status === 'approved') {
+                    $available = (int) $item->stok_items;
+
+                    if ($quantity > $available) {
+                        throw ValidationException::withMessages([
+                            'jumlah' => 'Stok '.$item->nama_items.' tidak mencukupi. Stok tersedia: '.$available,
+                        ]);
+                    }
+                }
+
+                $hargaJual = $isPenjualan ? (float) $item->harga_jual : null;
+                $total = $isPenjualan ? $hargaJual * $quantity * (1 - ($discountRate / 100)) : null;
+
+                if ($row) {
+                    $row->update(array_merge($shared, [
+                        'item_id' => $item->id,
+                        'cabang_id' => $item->cabang_id,
+                        'jumlah' => $quantity,
+                        'harga_jual' => $hargaJual,
+                        'total' => $total,
+                    ]));
+                    $remainingIds[] = $row->id;
+                } else {
+                    $created = StockOut::create(array_merge($shared, [
+                        'item_id' => $item->id,
+                        'cabang_id' => $item->cabang_id,
+                        'jumlah' => $quantity,
+                        'jenis' => $firstRow->jenis,
+                        'harga_jual' => $hargaJual,
+                        'discount' => $firstRow->discount,
+                        'paket_bundling' => $firstRow->paket_bundling,
+                        'total' => $total,
+                        'batch_id' => $firstRow->batch_id,
+                        'status' => $firstRow->status,
+                        'tanggal' => $firstRow->tanggal,
+                        'user_id' => $firstRow->user_id,
+                        'approved_by' => $firstRow->approved_by,
+                        'approved_at' => $firstRow->approved_at,
+                    ]));
+                    $remainingIds[] = $created->id;
+                }
+
+                if ($isApproved) {
+                    $item->decrement('stok_items', $quantity);
+                }
+            }
+
+            StockOut::whereIn('id', $batchRows->pluck('id')->diff($remainingIds))->delete();
+        });
+
+        return redirect()->route('stockout.index')->with('success', 'Transaksi berhasil diperbarui.');
+    }
+
+    public function updatePaymentProof(Request $request, StockOut $stockOut)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+            abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
+        }
+
+        if ($stockOut->status !== 'approved') {
+            return redirect()->route('stockout.index')->with('error', 'Bukti pembayaran hanya untuk transaksi approved.');
+        }
+
+        $data = $request->validate([
+            'kode_pembayaran' => 'required|string|max:100',
+            'bukti_pembayaran' => 'nullable|file|mimes:pdf|max:5120',
+            '_redirect_to' => 'nullable|in:index,edit',
+        ]);
+
+        $batchRows = $stockOut->batch_id
+            ? StockOut::where('batch_id', $stockOut->batch_id)->get()
+            : collect([$stockOut]);
+
+        $proofPath = $batchRows->firstWhere('bukti_pembayaran')?->bukti_pembayaran;
+
+        if ($request->hasFile('bukti_pembayaran')) {
+            if ($proofPath) {
+                Storage::disk('public')->delete($proofPath);
+            }
+
+            $proofPath = $request->file('bukti_pembayaran')->store('stockout-payment-proof', 'public');
+        }
+
+        StockOut::whereIn('id', $batchRows->pluck('id'))->update([
+            'kode_pembayaran' => $data['kode_pembayaran'],
+            'bukti_pembayaran' => $proofPath,
+        ]);
+
+        $redirect = ($data['_redirect_to'] ?? 'index') === 'edit'
+            ? redirect()->route('stockout.edit', $stockOut)
+            : redirect()->route('stockout.index');
+
+        return $redirect->with('success', 'Bukti pembayaran berhasil disimpan.');
+    }
+
     public function invoice(StockOut $stockOut)
     {
         /** @var User $user */
@@ -160,17 +373,36 @@ class StockOutController extends Controller
             'jumlah' => 'required|array|min:1',
             'jumlah.*' => 'required|integer|min:1',
             'jenis' => 'required|in:penjualan,DO,request',
-            'jenis_pembayaran' => 'required|in:qris,transfer',
+            'jenis_pembayaran' => 'required_if:jenis,penjualan|nullable|in:qris,transfer',
             'nomor_spk' => 'required_if:jenis,DO|nullable|string|max:100',
             'nomor_im' => 'required_if:jenis,request|nullable|string|max:100',
-            'nama_customer' => 'required|string|max:255',
-            'nik_ktp' => ['required', 'string', 'regex:/^[0-9]{16}$/'],
-            'nomor_telepon' => ['required', 'regex:/^[0-9]+$/', 'max:30'],
-            'alamat_customer' => 'required|string|max:2000',
+            'nama_customer' => 'required_if:jenis,penjualan|nullable|string|max:255',
+            'nik_ktp' => [
+                Rule::requiredIf(fn (): bool => $this->butuhNikKtp($request)),
+                'nullable',
+                'string',
+                'regex:/^[0-9]{16}$/',
+            ],
+            'jabatan' => [
+                Rule::requiredIf(fn (): bool => $this->butuhJabatan($request)),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+            'nomor_telepon' => [
+                Rule::requiredIf(fn (): bool => $this->butuhKontakCustomer($request)),
+                'nullable',
+                'regex:/^[0-9]+$/',
+                'max:30',
+            ],
+            'alamat_customer' => [
+                Rule::requiredIf(fn (): bool => $this->butuhKontakCustomer($request)),
+                'nullable',
+                'string',
+                'max:2000',
+            ],
             'pic_penjualan' => 'nullable|string|max:255',
-            'harga_jual' => 'nullable|array',
-            'harga_jual.*' => 'nullable|numeric|min:0',
-            'discount' => 'required_if:jenis,penjualan|nullable|in:member,retail',
+            'discount' => 'required_if:jenis,penjualan|nullable|in:member,retail,retail_non_ktp',
             'paket_bundling' => 'required_if:jenis,DO|nullable|in:paket_a,paket_b,paket_c',
             'tanggal' => 'required|date',
             'keterangan' => 'nullable|string|max:255',
@@ -198,21 +430,22 @@ class StockOutController extends Controller
         }
 
         $isPenjualan = $data['jenis'] === 'penjualan';
+        $isMemberSale = $isPenjualan && ($data['discount'] ?? null) === 'member';
+        $isRetailNonKtpSale = $isPenjualan && ($data['discount'] ?? null) === 'retail_non_ktp';
 
-        $discount = $isPenjualan
-            ? match ($data['discount'] ?? 'retail') {
-                'member' => 15,
-                'retail' => 10,
-                default => 10,
-            }
-        : 0;
+        $discount = match ($data['discount'] ?? null) {
+            'member' => StockOut::DISCOUNT_TAG_MEMBER,
+            'retail' => StockOut::DISCOUNT_RETAIL_KTP,
+            'retail_non_ktp' => StockOut::DISCOUNT_RETAIL_NON_KTP,
+            default => 0,
+        };
         $requiresApproval = $data['jenis'] === 'request'
             || ($isPenjualan && ($data['discount'] ?? 'retail') === 'member');
         $stockOutRows = [];
 
         foreach ($data['item_id'] as $index => $itemId) {
             $item = $items->get($itemId);
-            $hargaJual = $isPenjualan ? ($data['harga_jual'][$index] ?? $item->harga_items) : null;
+            $hargaJual = $isPenjualan ? (float) $item->harga_jual : null;
             $jumlah = (int) $data['jumlah'][$index];
             $total = $isPenjualan ? $hargaJual * $jumlah * (1 - ($discount / 100)) : null;
 
@@ -221,7 +454,7 @@ class StockOutController extends Controller
 
         $batchId = (string) Str::uuid();
 
-        DB::transaction(function () use ($data, $user, $requiresApproval, $discount, $stockOutRows, $batchId) {
+        DB::transaction(function () use ($data, $user, $requiresApproval, $discount, $isMemberSale, $isRetailNonKtpSale, $stockOutRows, $batchId) {
             foreach ($stockOutRows as $row) {
                 $item = $row['item'];
 
@@ -230,13 +463,15 @@ class StockOutController extends Controller
                     'cabang_id' => $item->cabang_id,
                     'jumlah' => $row['jumlah'],
                     'jenis' => $data['jenis'],
-                    'jenis_pembayaran' => $data['jenis_pembayaran'],
+                    'jenis_pembayaran' => $data['jenis_pembayaran'] ?? null,
                     'nomor_spk' => $data['jenis'] === 'DO' ? ($data['nomor_spk'] ?? null) : null,
                     'nomor_im' => $data['jenis'] === 'request' ? ($data['nomor_im'] ?? null) : null,
-                    'nomor_telepon' => $data['nomor_telepon'],
-                    'nama_customer' => $data['nama_customer'],
-                    'nik_ktp' => $data['nik_ktp'],
-                    'alamat_customer' => $data['alamat_customer'],
+                    'nomor_telepon' => $isRetailNonKtpSale ? null : ($data['nomor_telepon'] ?? null),
+                    'nama_customer' => $data['nama_customer'] ?? null,
+                    // NIK khusus Retail - KTP, jabatan khusus TAG Member.
+                    'nik_ktp' => $isMemberSale || $isRetailNonKtpSale ? null : ($data['nik_ktp'] ?? null),
+                    'jabatan' => $isMemberSale ? ($data['jabatan'] ?? null) : null,
+                    'alamat_customer' => $isRetailNonKtpSale ? null : ($data['alamat_customer'] ?? null),
                     'pic_penjualan' => $data['pic_penjualan'] ?? null,
                     'batch_id' => $batchId,
                     'harga_jual' => $row['hargaJual'],
@@ -265,5 +500,30 @@ class StockOutController extends Controller
         };
 
         return redirect()->route('stockout.index')->with('success', $pesan);
+    }
+
+    /**
+     * NIK KTP hanya wajib untuk penjualan Retail - KTP.
+     * Jenis DO/request tidak memakai data identitas customer.
+     */
+    private function butuhNikKtp(Request $request): bool
+    {
+        return $request->input('jenis') === 'penjualan'
+            && $request->input('discount') === 'retail';
+    }
+
+    private function butuhKontakCustomer(Request $request): bool
+    {
+        return $request->input('jenis') === 'penjualan'
+            && $request->input('discount') !== 'retail_non_ktp';
+    }
+
+    /**
+     * Jabatan wajib untuk penjualan TAG Member.
+     */
+    private function butuhJabatan(Request $request): bool
+    {
+        return $request->input('jenis') === 'penjualan'
+            && $request->input('discount') === 'member';
     }
 }

@@ -39,7 +39,13 @@ class HistoryController extends Controller
 
         if ($type === 'approval-in') {
             $record = StockInEditRequest::with(['oldItem.cabang', 'newItem', 'requester', 'approver'])->findOrFail($id);
-            $this->authorizeCabang($user, $record->oldItem->cabang_id);
+            $cabangId = $record->oldItem?->cabang_id ?? $record->newItem?->cabang_id;
+
+            if ($cabangId !== null) {
+                $this->authorizeCabang($user, (int) $cabangId);
+            } elseif (! $user->isAdminHo()) {
+                abort(403, 'Anda tidak memiliki akses ke histori cabang lain.');
+            }
 
             return view('history.show', compact('type', 'record'));
         }
@@ -72,7 +78,7 @@ class HistoryController extends Controller
         }
 
         if ($request->filled('tipe') && $request->tipe === 'out') {
-            $riwayat = StockOut::with(['item', 'cabang', 'user', 'approver'])
+            $riwayat = StockOut::with('item')
                 ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
                 ->when($request->filled('item'), fn ($q) => $q->whereHas('item', fn ($qq) => $qq->where('nama_items', 'like', '%'.$request->item.'%')))
                 ->when($request->filled('jenis'), fn ($q) => $q->where('jenis', $request->jenis))
