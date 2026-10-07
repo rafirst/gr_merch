@@ -6,7 +6,7 @@
     <div class="card-header"><h3 class="card-title">Daftar Transaksi Menunggu Approval</h3></div>
     <div class="card-body p-0">
         <table class="table table-striped mb-0">
-            <thead><tr><th>Item</th><th>User </th><th>Tipe Request</th><th class="text-center">Aksi</th></tr></thead>
+            <thead><tr><th>Item</th><th>User </th><th>Tipe Transaksi</th><th class="text-center">Aksi</th></tr></thead>
             <tbody>
                 @forelse($approvalRequests as $approvalRequest)
                     <tr>
