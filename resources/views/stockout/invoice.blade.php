@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice {{ $stockOut->id }} - GR_merch</title>
     @unless($isPdf ?? false)
-        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}?v={{ filemtime(public_path('assets/images/Logo-TAG-favicon-16x16px.png')) }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/Logo-TAG-favicon-16x16px.png') }}?v={{ filemtime(public_path('assets/images/Logo-TAG-favicon-16x16px.png')) }}-2">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     @endunless
     <style>
