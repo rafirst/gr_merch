@@ -458,7 +458,7 @@
                 </div>
 
                 <div class="brand-block tag-block">
-                    <img src="{{ asset('assets/images/Logo TAG-White.png') }}" alt="TAG logo" class="tag-mark">
+                    <img src="{{ asset('assets/images/Logo TAG-white.png') }}" alt="TAG logo" class="tag-mark">
                 </div>
             </div>
 
