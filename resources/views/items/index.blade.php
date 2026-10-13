@@ -34,7 +34,7 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <table class="table table-striped mb-0">
+        <table class="table table-striped mb-0 items-table {{ auth()->user()->isAdminHo() ? 'items-table-admin' : 'items-table-branch' }}">
             <thead>
                 <tr>
                     <th>Kode</th><th>Nama Item</th><th>Kategori</th><th>Harga</th>
@@ -58,7 +58,7 @@
                         @else
                             <td>{{ number_format((int) $item->stok_items, 0, ',', '.') }}</td>
                         @endif
-                        <td>
+                        <td class="items-actions-cell">
                             <a href="{{ route('items.show', $item) }}" class="btn btn-sm btn-info items-glossy" title="Lihat detail" aria-label="Lihat detail item">
                                 <i class="fas fa-eye"></i>
                             </a>
@@ -249,6 +249,108 @@
 
     .items-glossy.btn-danger {
         background: linear-gradient(145deg, #ff7180 0%, #ed3348 48%, #b6122b 100%);
+    }
+
+    .items-table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .items-table th,
+    .items-table td {
+        padding: 0.55rem 0.6rem;
+        font-size: 0.82rem;
+        line-height: 1.3;
+        vertical-align: middle;
+    }
+
+    .items-table th {
+        white-space: nowrap;
+    }
+
+    .items-table-admin th:nth-child(1),
+    .items-table-admin td:nth-child(1) {
+        width: 15%;
+    }
+
+    .items-table-admin th:nth-child(2),
+    .items-table-admin td:nth-child(2) {
+        width: 26%;
+    }
+
+    .items-table-admin th:nth-child(3),
+    .items-table-admin td:nth-child(3) {
+        width: 10%;
+    }
+
+    .items-table-admin th:nth-child(4),
+    .items-table-admin td:nth-child(4) {
+        width: 13%;
+    }
+
+    .items-table-admin th:nth-child(5),
+    .items-table-admin td:nth-child(5) {
+        width: 22%;
+    }
+
+    .items-table-admin th:nth-child(6),
+    .items-table-admin td:nth-child(6) {
+        width: 14%;
+    }
+
+    .items-table-branch th:nth-child(1),
+    .items-table-branch td:nth-child(1) {
+        width: 17%;
+    }
+
+    .items-table-branch th:nth-child(2),
+    .items-table-branch td:nth-child(2) {
+        width: 30%;
+    }
+
+    .items-table-branch th:nth-child(3),
+    .items-table-branch td:nth-child(3) {
+        width: 12%;
+    }
+
+    .items-table-branch th:nth-child(4),
+    .items-table-branch td:nth-child(4) {
+        width: 17%;
+    }
+
+    .items-table-branch th:nth-child(5),
+    .items-table-branch td:nth-child(5) {
+        width: 10%;
+    }
+
+    .items-table-branch th:nth-child(6),
+    .items-table-branch td:nth-child(6) {
+        width: 14%;
+    }
+
+    .items-table td:nth-child(1),
+    .items-table td:nth-child(3),
+    .items-table td:nth-child(4),
+    .items-table-branch td:nth-child(5) {
+        white-space: nowrap;
+    }
+
+    .items-table .items-actions-cell {
+        white-space: nowrap;
+    }
+
+    .items-table .items-actions-cell .items-glossy {
+        width: 27px;
+        height: 27px;
+        margin: 0 1px;
+        font-size: 0.72rem;
+        vertical-align: middle;
+    }
+
+    .items-table .items-delete-form {
+        display: inline-block !important;
+        margin: 0;
+        vertical-align: middle;
     }
 
     .items-pagination {
