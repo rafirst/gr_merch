@@ -272,7 +272,7 @@
 
     .stockout-form-card .stockout-transaction-layout.is-sales {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) 38px;
+        grid-template-columns: minmax(0, 2.1fr) minmax(78px, 1fr) minmax(105px, 1.4fr) minmax(105px, 1.4fr) 38px;
         align-items: end;
         gap: 0.2rem 0.7rem;
     }
@@ -316,6 +316,7 @@
         }
 
         .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row,
+        .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-reference-row,
         .stockout-form-card .stockout-transaction-layout.is-sales #itemRows {
             display: contents;
         }
@@ -327,7 +328,7 @@
         .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:not(:first-child) {
             display: grid;
             grid-column: 1 / -1;
-            grid-template-columns: minmax(0, 5fr) minmax(88px, 2fr) minmax(105px, 2fr) minmax(105px, 2fr) 38px;
+            grid-template-columns: minmax(0, 2.1fr) minmax(78px, 1fr) minmax(105px, 1.4fr) minmax(105px, 1.4fr) 38px;
             gap: 0.7rem;
             align-items: end;
             margin-right: 0;
@@ -335,37 +336,37 @@
         }
 
         .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row > .form-group:first-child {
-            grid-column: 1;
+            grid-column: 1 / span 2;
             grid-row: 1;
         }
 
         .stockout-form-card .stockout-transaction-layout.is-sales .stockout-transaction-row > .form-group:nth-child(2) {
-            grid-column: 2;
+            grid-column: 3 / span 2;
             grid-row: 1;
         }
 
         .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .item-select-group {
-            grid-column: 3;
-            grid-row: 1;
-        }
-
-        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .quantity-group {
             grid-column: 1;
             grid-row: 2;
         }
 
-        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .price-group {
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .quantity-group {
             grid-column: 2;
             grid-row: 2;
         }
 
-        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .total-group {
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .price-group {
             grid-column: 3;
             grid-row: 2;
         }
 
-        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .remove-item-group {
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .total-group {
             grid-column: 4;
+            grid-row: 2;
+        }
+
+        .stockout-form-card .stockout-transaction-layout.is-sales #itemRows > .item-row:first-child .remove-item-group {
+            grid-column: 5;
             grid-row: 2;
             align-self: end;
         }
@@ -704,6 +705,10 @@
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 0.45rem;
         margin-bottom: 1.25rem;
+    }
+
+    .stockout-preview-meta.is-non-sales {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .stockout-preview-meta > div {

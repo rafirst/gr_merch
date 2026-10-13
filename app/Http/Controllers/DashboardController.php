@@ -6,11 +6,13 @@ use App\Models\Item;
 use App\Models\StockIn;
 use App\Models\StockOut;
 use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         /** @var User $user */
         $user = Auth::user();
@@ -69,9 +71,35 @@ class DashboardController extends Controller
             ])
             ->values();
 
+        $search = trim((string) $request->query('search', ''));
+        if ($search !== '') {
+            $normalizedSearch = mb_strtolower($search);
+            $stockItems = $stockItems->filter(function (array $stockGroup) use ($normalizedSearch): bool {
+                $item = $stockGroup['item'];
+                $searchableText = mb_strtolower($item->kode_items.' '.$item->nama_items);
+
+                return str_contains($searchableText, $normalizedSearch);
+            });
+        }
+
+        $stockItems = $stockItems->values();
+        $perPage = 15;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage('stock_page');
+        $stockItems = new LengthAwarePaginator(
+            $stockItems->forPage($currentPage, $perPage)->values(),
+            $stockItems->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'pageName' => 'stock_page',
+                'query' => $request->query(),
+            ],
+        );
+
         return view('dashboard.index', compact(
             'totalItems', 'totalStok', 'pendingApproval',
-            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin', 'stockItems'
+            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin', 'stockItems', 'search'
         ));
     }
 

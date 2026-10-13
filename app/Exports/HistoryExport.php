@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\StockIn;
 use App\Models\StockOut;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -16,32 +17,45 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
     {
         /** @var User $user */
         $user = Auth::user();
-        $query = StockOut::with(['item', 'cabang', 'user']);
+        $stockIns = StockIn::with(['item', 'cabang', 'user']);
+        $stockOuts = StockOut::with(['item', 'cabang', 'user']);
 
         if (! $user->isAdminHo()) {
-            $query->where('cabang_id', $user->cabang_id);
+            $stockIns->where('cabang_id', $user->cabang_id);
+            $stockOuts->where('cabang_id', $user->cabang_id);
         }
 
-        return $query->latest('tanggal')->get();
+        return $stockIns->get()
+            ->concat($stockOuts->get())
+            ->sortByDesc(fn (StockIn|StockOut $row) => $row->tanggal->getTimestamp())
+            ->values();
     }
 
     public function headings(): array
     {
-        return ['Tanggal', 'Kode Items', 'Nama Items', 'Cabang', 'Jumlah', 'Jenis', 'Status', 'Harga Jual', 'Total', 'Diinput Oleh'];
+        return ['Tanggal', 'Tipe Transaksi', 'Kode Items', 'Nama Items', 'Cabang', 'Jumlah', 'Sumber', 'Jenis', 'Status', 'Harga Jual', 'Total', 'Diinput Oleh'];
     }
 
+    /**
+     * @param  StockIn|StockOut  $row
+     * @return array<int, mixed>
+     */
     public function map($row): array
     {
+        $isStockIn = $row instanceof StockIn;
+
         return [
             $row->tanggal->format('Y-m-d'),
+            $isStockIn ? 'Barang Masuk' : 'Barang Keluar',
             $row->item->kode_items ?? '-',
             $row->item->nama_items ?? '-',
             $row->cabang->nama_cabang ?? '-',
             $row->jumlah,
-            ucfirst($row->jenis),
-            ucfirst($row->status),
-            $row->harga_jual,
-            $row->total,
+            $isStockIn ? ($row->sumber ?: '-') : '-',
+            $isStockIn ? '-' : ucfirst($row->jenis),
+            $isStockIn ? '-' : ucfirst($row->status),
+            $isStockIn ? '-' : $row->harga_jual,
+            $isStockIn ? '-' : $row->total,
             $row->user->name ?? '-',
         ];
     }

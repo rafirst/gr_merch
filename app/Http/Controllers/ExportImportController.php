@@ -9,6 +9,7 @@ use App\Exports\StockInImportTemplateExport;
 use App\Exports\StockItemsExport;
 use App\Imports\ItemsImport;
 use App\Imports\StockInImport;
+use App\Models\StockIn;
 use App\Models\StockOut;
 use App\Models\User;
 use Dompdf\Dompdf;
@@ -52,6 +53,7 @@ class ExportImportController extends Controller
                 'user_role' => $user?->role,
                 'user_cabang_id' => $user?->cabang_id,
                 'visible_rows' => 0,
+                'total_stock_in_rows' => StockIn::query()->count(),
                 'total_stock_out_rows' => StockOut::query()->count(),
             ]);
         }

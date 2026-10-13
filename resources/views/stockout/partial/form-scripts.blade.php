@@ -338,8 +338,11 @@
         const discountLabel = jenisSelect.value === 'penjualan'
             ? 'Discount ' + discount + '%'
             : 'Potongan (0%)';
-        setElementHidden(previewDiscountRow, jenisSelect.value === 'penjualan' && discountInput.value === 'retail_non_ktp');
-        document.getElementById('previewPpnRow').hidden = !hasTransactionTotal;
+        setElementHidden(
+            previewDiscountRow,
+            jenisSelect.value !== 'penjualan' || discountInput.value === 'retail_non_ktp',
+        );
+        setElementHidden(document.getElementById('previewPpnRow'), jenisSelect.value !== 'penjualan');
 
         setPreviewText(previewElements.subtotal, formatCurrency(subtotal));
         setPreviewText(previewElements.ppnAmount, formatCurrency(ppnAmount));

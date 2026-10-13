@@ -66,18 +66,19 @@
 <div class="card stock-check-card">
     <div class="card-header stock-check-header">
         <div>
-            <h3 class="card-title">Ringkasan Stok</h3>        </div>
+            <h3 class="card-title">Ringkasan Stok</h3>
         </div>
+    </div>
     <div class="card-body">
-        <div class="row stock-filter-row">
+        <form method="GET" action="{{ route('dashboard') }}" class="row stock-filter-row">
             <div class="col-12 form-group">
                 <label for="stockItemFilter">Cari item</label>
                 <div class="stock-search-input">
                     <i class="fas fa-search"></i>
-                    <input type="search" id="stockItemFilter" class="form-control" placeholder="Cari kode atau nama item..." autocomplete="off">
+                    <input type="search" id="stockItemFilter" name="search" value="{{ $search }}" class="form-control" placeholder="Cari kode atau nama item..." autocomplete="off">
                 </div>
             </div>
-        </div>
+        </form>
         <div class="stock-table-wrap">
             <table class="table stock-check-table">
                 <colgroup>
@@ -110,12 +111,47 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="stock-empty">Belum ada data stok.</td></tr>
+                        <tr>
+                            <td colspan="4" class="stock-empty">
+                                {{ $search !== '' ? 'Tidak ada item yang cocok.' : 'Belum ada data stok.' }}
+                            </td>
+                        </tr>
                     @endforelse
                 </tbody>
             </table>
-            <p id="stockFilterEmpty" class="stock-empty" hidden>Item tidak ditemukan.</p>
         </div>
+    </div>
+    <div class="card-footer stock-pagination">
+        <span class="stock-pagination-summary">
+            Showing {{ $stockItems->firstItem() ?? 0 }} to {{ $stockItems->lastItem() ?? 0 }} of {{ $stockItems->total() }} results
+        </span>
+        @if($stockItems->hasPages())
+            <nav class="stock-pagination-controls" role="navigation" aria-label="Navigasi halaman ringkasan stok">
+                @if($stockItems->onFirstPage())
+                    <span class="stock-pagination-arrow is-disabled" aria-disabled="true" aria-label="Halaman sebelumnya">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </span>
+                @else
+                    <a href="{{ $stockItems->previousPageUrl() }}" class="stock-pagination-arrow" rel="prev" aria-label="Halaman sebelumnya">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </a>
+                @endif
+                <span class="stock-pagination-counter" aria-current="page">
+                    <span class="stock-pagination-current">{{ str_pad((string) $stockItems->currentPage(), 2, '0', STR_PAD_LEFT) }}</span>
+                    <span class="stock-pagination-divider">/</span>
+                    <span class="stock-pagination-total">{{ str_pad((string) $stockItems->lastPage(), 2, '0', STR_PAD_LEFT) }}</span>
+                </span>
+                @if($stockItems->hasMorePages())
+                    <a href="{{ $stockItems->nextPageUrl() }}" class="stock-pagination-arrow" rel="next" aria-label="Halaman berikutnya">
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </a>
+                @else
+                    <span class="stock-pagination-arrow is-disabled" aria-disabled="true" aria-label="Halaman berikutnya">
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </span>
+                @endif
+            </nav>
+        @endif
     </div>
 </div>
 
@@ -427,13 +463,17 @@
         position: relative;
     }
 
-    .content .stock-search-input i {
+    .content .stock-search-input > i {
         position: absolute;
         z-index: 1;
         top: 50%;
         left: 0.85rem;
         color: rgba(244, 247, 250, 0.5);
         transform: translateY(-50%);
+    }
+
+    .content .stock-search-input input {
+        padding-right: 2.75rem;
     }
 
     .content .stock-search-input input {
@@ -548,6 +588,89 @@
         text-align: center;
     }
 
+    .content .stock-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-top: 1px solid rgba(105, 143, 176, 0.16) !important;
+        background: rgba(3, 10, 17, 0.88) !important;
+    }
+
+    .content .stock-pagination-summary {
+        margin: 0;
+        color: rgba(244, 247, 250, 0.58);
+        font-size: 0.75rem;
+    }
+
+    .content .stock-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: auto;
+    }
+
+    .content .stock-pagination-arrow {
+        display: inline-flex;
+        width: 1.8rem;
+        height: 1.8rem;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(58, 78, 95, 0.58);
+        border-radius: 50%;
+        background: transparent;
+        color: rgba(244, 247, 250, 0.78);
+        font-size: 0.62rem;
+        text-decoration: none;
+        transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .content .stock-pagination-arrow:hover,
+    .content .stock-pagination-arrow:focus {
+        border-color: rgba(247, 0, 8, 0.68);
+        background: rgba(247, 0, 8, 0.12);
+        color: #ffffff;
+        outline: none;
+        text-decoration: none;
+    }
+
+    .content .stock-pagination-arrow.is-disabled {
+        border-color: rgba(45, 61, 75, 0.4);
+        color: rgba(244, 247, 250, 0.28);
+        cursor: not-allowed;
+    }
+
+    .content .stock-pagination-counter {
+        display: inline-flex;
+        min-width: 5.6rem;
+        height: 1.8rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0 0.75rem;
+        border: 1px solid rgba(58, 78, 95, 0.48);
+        border-radius: 999px;
+        background: linear-gradient(145deg, rgba(16, 28, 39, 0.94), rgba(5, 12, 20, 0.96));
+        color: rgba(244, 247, 250, 0.58);
+        font-size: 0.72rem;
+        font-weight: 600;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .content .stock-pagination-current {
+        color: #ff343e;
+        font-weight: 700;
+    }
+
+    .content .stock-pagination-divider {
+        color: rgba(120, 148, 171, 0.55);
+    }
+
+    .content .stock-pagination-total {
+        color: rgba(244, 247, 250, 0.72);
+    }
+
     @media (max-width: 767.98px) {
         .content .container-fluid > .row:first-child > [class*="col-"] {
             flex: 0 0 100%;
@@ -587,6 +710,17 @@
         }
     }
 
+    @media (max-width: 575.98px) {
+        .content .stock-pagination {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .content .stock-pagination-controls {
+            align-self: flex-end;
+        }
+    }
+
     .content .dashboard-stat-box h3,
     .content .dashboard-stat-box p,
     .content .total-stock-box h3,
@@ -605,27 +739,6 @@
     const chartDataOut = @json($dataOut);
     const chartMaximum = Math.max(...chartDataIn, ...chartDataOut, 0);
     const chartYAxisMaximum = Math.max(20, Math.ceil(chartMaximum / 20) * 20);
-
-    const stockItemFilter = document.getElementById('stockItemFilter');
-    const stockRows = Array.from(document.querySelectorAll('.stock-check-row'));
-    const stockFilterEmpty = document.getElementById('stockFilterEmpty');
-
-    function filterStockRows() {
-        const search = stockItemFilter.value.trim().toLowerCase();
-        let visibleRows = 0;
-
-        stockRows.forEach((row) => {
-            const matchesSearch = !search || row.dataset.search.includes(search);
-            const isVisible = matchesSearch;
-
-            row.hidden = !isVisible;
-            visibleRows += isVisible ? 1 : 0;
-        });
-
-        stockFilterEmpty.hidden = visibleRows > 0;
-    }
-
-    stockItemFilter.addEventListener('input', filterStockRows);
 
     new Chart(ctx, {
         type: 'line',
