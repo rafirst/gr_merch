@@ -77,7 +77,38 @@
             </tbody>
         </table>
     </div>
-    <div class="card-footer">{{ $items->links() }}</div>
+    <div class="card-footer items-pagination">
+        <span class="items-pagination-summary">
+            Showing {{ $items->firstItem() ?? 0 }} to {{ $items->lastItem() ?? 0 }} of {{ $items->total() }} results
+        </span>
+        @if($items->hasPages())
+            <nav class="items-pagination-controls" role="navigation" aria-label="Navigasi halaman items">
+                @if($items->onFirstPage())
+                    <span class="items-pagination-arrow is-disabled" aria-disabled="true" aria-label="Halaman sebelumnya">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </span>
+                @else
+                    <a href="{{ $items->previousPageUrl() }}" class="items-pagination-arrow" rel="prev" aria-label="Halaman sebelumnya">
+                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                    </a>
+                @endif
+                <span class="items-pagination-counter" aria-current="page">
+                    <span class="items-pagination-current">{{ str_pad((string) $items->currentPage(), 2, '0', STR_PAD_LEFT) }}</span>
+                    <span class="items-pagination-divider">/</span>
+                    <span class="items-pagination-total">{{ str_pad((string) $items->lastPage(), 2, '0', STR_PAD_LEFT) }}</span>
+                </span>
+                @if($items->hasMorePages())
+                    <a href="{{ $items->nextPageUrl() }}" class="items-pagination-arrow" rel="next" aria-label="Halaman berikutnya">
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </a>
+                @else
+                    <span class="items-pagination-arrow is-disabled" aria-disabled="true" aria-label="Halaman berikutnya">
+                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    </span>
+                @endif
+            </nav>
+        @endif
+    </div>
 </div>
 @endsection
 
@@ -218,6 +249,100 @@
 
     .items-glossy.btn-danger {
         background: linear-gradient(145deg, #ff7180 0%, #ed3348 48%, #b6122b 100%);
+    }
+
+    .items-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-top: 1px solid rgba(105, 143, 176, 0.16) !important;
+        background: rgba(3, 10, 17, 0.88) !important;
+    }
+
+    .items-pagination-summary {
+        margin: 0;
+        color: rgba(244, 247, 250, 0.58);
+        font-size: 0.75rem;
+    }
+
+    .items-pagination-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: auto;
+    }
+
+    .items-pagination-arrow {
+        display: inline-flex;
+        width: 1.8rem;
+        height: 1.8rem;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(58, 78, 95, 0.58);
+        border-radius: 50%;
+        background: transparent;
+        color: rgba(244, 247, 250, 0.78);
+        font-size: 0.62rem;
+        text-decoration: none;
+        transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .items-pagination-arrow:hover,
+    .items-pagination-arrow:focus {
+        border-color: rgba(247, 0, 8, 0.68);
+        background: rgba(247, 0, 8, 0.12);
+        color: #ffffff;
+        outline: none;
+        text-decoration: none;
+    }
+
+    .items-pagination-arrow.is-disabled {
+        border-color: rgba(45, 61, 75, 0.4);
+        color: rgba(244, 247, 250, 0.28);
+        cursor: not-allowed;
+    }
+
+    .items-pagination-counter {
+        display: inline-flex;
+        min-width: 5.6rem;
+        height: 1.8rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0 0.75rem;
+        border: 1px solid rgba(58, 78, 95, 0.48);
+        border-radius: 999px;
+        background: linear-gradient(145deg, rgba(16, 28, 39, 0.94), rgba(5, 12, 20, 0.96));
+        color: rgba(244, 247, 250, 0.58);
+        font-size: 0.72rem;
+        font-weight: 600;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .items-pagination-current {
+        color: #ff343e;
+        font-weight: 700;
+    }
+
+    .items-pagination-divider {
+        color: rgba(120, 148, 171, 0.55);
+    }
+
+    .items-pagination-total {
+        color: rgba(244, 247, 250, 0.72);
+    }
+
+    @media (max-width: 575.98px) {
+        .items-pagination {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .items-pagination-controls {
+            align-self: flex-end;
+        }
     }
 
     .items-confirm-modal {
