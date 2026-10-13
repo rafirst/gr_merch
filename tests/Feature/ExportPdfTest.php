@@ -7,6 +7,7 @@ use App\Models\Item;
 use App\Models\StockOut;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class ExportPdfTest extends TestCase
@@ -79,6 +80,30 @@ class ExportPdfTest extends TestCase
         $response = $this->actingAs($staff)->get(route('history.export'));
 
         $response->assertOk()->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_empty_history_pdf_export_logs_data_scope_diagnostics(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->create([
+            'role' => 'admin_ho',
+            'cabang_id' => null,
+        ]);
+
+        Log::shouldReceive('warning')
+            ->once()
+            ->withArgs(fn (string $message, array $context): bool => $message === 'History PDF export returned no visible transactions.'
+                && $context['user_id'] === $admin->id
+                && $context['user_role'] === 'admin_ho'
+                && $context['user_cabang_id'] === null
+                && $context['visible_rows'] === 0
+                && $context['total_stock_out_rows'] === 0);
+
+        $response = $this->actingAs($admin)->get(route('history.export'));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
     }
 
     public function test_history_index_hides_excel_option_for_staff_cabang(): void

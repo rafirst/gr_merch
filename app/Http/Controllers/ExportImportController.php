@@ -9,9 +9,14 @@ use App\Exports\StockInImportTemplateExport;
 use App\Exports\StockItemsExport;
 use App\Imports\ItemsImport;
 use App\Imports\StockInImport;
+use App\Models\StockOut;
+use App\Models\User;
 use Dompdf\Dompdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Exception as PhpSpreadsheetException;
 
@@ -35,18 +40,37 @@ class ExportImportController extends Controller
 
     public function exportHistory()
     {
+        $export = new HistoryExport;
+        $rows = $export->collection();
+
+        if ($rows->isEmpty()) {
+            /** @var User|null $user */
+            $user = Auth::user();
+
+            Log::warning('History PDF export returned no visible transactions.', [
+                'user_id' => Auth::id(),
+                'user_role' => $user?->role,
+                'user_cabang_id' => $user?->cabang_id,
+                'visible_rows' => 0,
+                'total_stock_out_rows' => StockOut::query()->count(),
+            ]);
+        }
+
         return $this->downloadPdf(
-            new HistoryExport,
+            $export,
             'Laporan Histori Transaksi',
             'Catatan transaksi barang keluar yang tercatat dalam sistem.',
             'Histori Transaksi',
             'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.pdf',
+            $rows,
         );
     }
 
     public function exportHistoryExcel()
     {
-        abort_unless(auth()->user()?->isAdminHo(), 403, 'Hanya administrator yang dapat mengekspor Excel.');
+        /** @var User|null $user */
+        $user = Auth::user();
+        abort_unless($user?->isAdminHo(), 403, 'Hanya administrator yang dapat mengekspor Excel.');
 
         return Excel::download(
             new HistoryExport,
@@ -70,9 +94,15 @@ class ExportImportController extends Controller
         return Excel::download(new StockInImportTemplateExport, 'template-import-barang-masuk-gr-merch.xlsx');
     }
 
-    private function downloadPdf(object $export, string $title, string $subtitle, string $sectionTitle, string $filename): Response
-    {
-        $rows = $export->collection()
+    private function downloadPdf(
+        object $export,
+        string $title,
+        string $subtitle,
+        string $sectionTitle,
+        string $filename,
+        ?Collection $collection = null,
+    ): Response {
+        $rows = ($collection ?? $export->collection())
             ->map(fn ($row): array => $export->map($row))
             ->all();
 
