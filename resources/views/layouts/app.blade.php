@@ -155,6 +155,18 @@
             padding: 0 1.25rem;
         }
 
+        .mobile-menu-toggle {
+            display: none;
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--gazoo-border);
+            border-radius: 4px;
+            color: #f4f7fa !important;
+        }
+
         body.sidebar-mini .main-header,
         body.sidebar-mini.sidebar-collapse .main-header,
         body.sidebar-mini.sidebar-open .main-header {
@@ -669,8 +681,13 @@
         @media (max-width: 991.98px) {
             .main-sidebar {
                 width: 230px !important;
+                max-width: 85vw;
                 transform: translateX(-100%);
                 transition: transform 0.2s ease;
+            }
+
+            .mobile-menu-toggle {
+                display: inline-flex;
             }
 
             body.sidebar-open .main-sidebar {
@@ -731,8 +748,16 @@
                 gap: 0.6rem;
             }
 
+            .content .card,
+            .content .card-header,
+            .content .card-body,
+            .content .container-fluid {
+                min-width: 0;
+            }
+
             .content .card-body {
                 overflow-x: auto;
+                overscroll-behavior-x: contain;
             }
 
             .content .table {
@@ -745,17 +770,74 @@
             }
 
             .content .form-row {
-                margin-right: 0;
-                margin-left: 0;
+                margin-right: -0.35rem;
+                margin-left: -0.35rem;
             }
 
             .content .form-row > [class*="col-"] {
-                padding-right: 0;
-                padding-left: 0;
+                padding-right: 0.35rem;
+                padding-left: 0.35rem;
             }
 
             .content .btn {
                 max-width: 100%;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .content .card-header {
+                align-items: stretch;
+            }
+
+            .content .card-header > form {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                width: 100%;
+                height: auto;
+                min-width: 0;
+                flex-wrap: wrap;
+            }
+
+            .content .card-header form > * {
+                min-width: 0;
+                max-width: 100%;
+            }
+
+            .content .card-header form > .form-control,
+            .content .card-header form > .custom-select,
+            .content .card-header form > select {
+                width: auto;
+                flex: 1 1 140px;
+            }
+
+            .content .card-header form > .btn,
+            .content .card-header form > button,
+            .content .card-header form > a {
+                min-width: 38px;
+                min-height: 38px;
+                flex: 0 0 auto;
+            }
+
+            .content .btn:not(.btn-sm) {
+                min-height: 38px;
+            }
+
+            .content .btn-sm {
+                min-width: 32px;
+                min-height: 32px;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .main-header {
+                gap: 0.35rem;
+            }
+
+            .content form:not(.form-inline) .form-control,
+            .content form:not(.form-inline) .custom-select {
+                max-width: 100%;
+                font-size: 16px;
             }
         }
 
@@ -826,6 +908,9 @@
 
     <!-- Navbar -->
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">
+        <a class="mobile-menu-toggle" data-widget="pushmenu" href="#" role="button" aria-label="Buka menu navigasi">
+            <i class="fas fa-bars" aria-hidden="true"></i>
+        </a>
         <a class="topbar-brand" href="{{ route('dashboard') }}" aria-label="Toyota Gazoo Racing">
             <img src="{{ asset('assets/images/Logo Toyota White.png') }}" alt="Toyota Gazoo Racing">
         </a>

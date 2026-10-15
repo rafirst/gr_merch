@@ -60,6 +60,28 @@ class ItemAuthorizationTest extends TestCase
         $this->get(route('items.import.form'))->assertOk();
     }
 
+    public function test_items_index_shows_stock_instead_of_prices_for_admin_and_staff(): void
+    {
+        $cabang = $this->createCabang();
+        $admin = $this->createUser('admin_ho', null);
+        $staff = $this->createUser('staff_cabang', $cabang->id);
+        $item = $this->createItem($cabang);
+        $item->update(['stok_items' => 37]);
+
+        foreach ([$admin, $staff] as $user) {
+            $this->actingAs($user)->get(route('items.index'))
+                ->assertOk()
+                ->assertSee('<th>Stok</th>', false)
+                ->assertSee('<td>37</td>', false)
+                ->assertDontSee('Rp 100.000', false);
+        }
+
+        $this->actingAs($staff)->get(route('items.show', $item))
+            ->assertOk()
+            ->assertSee('Rp 100.000', false)
+            ->assertSee('Rp 120.000', false);
+    }
+
     private function createCabang(): Cabang
     {
         return Cabang::create([

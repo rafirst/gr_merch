@@ -634,10 +634,33 @@
 
         .stockout-filter-form input {
             flex: 1 1 180px;
+            width: auto;
+            min-width: 0;
+        }
+
+        .stockout-filter-form select {
+            width: auto;
+            min-width: 0;
+            flex: 1 1 145px;
+        }
+
+        .stockout-filter-button,
+        .stockout-reset-button {
+            flex: 0 0 38px;
         }
 
         .stockout-card-header .stockout-create-button {
-            margin-left: 0;
+            margin-left: auto;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .stockout-filter-form input {
+            flex-basis: 100%;
+        }
+
+        .stockout-filter-form select {
+            flex-basis: calc(50% - 0.25rem);
         }
     }
 </style>

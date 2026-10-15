@@ -37,11 +37,9 @@
         <table class="table table-striped mb-0 items-table {{ auth()->user()->isAdminHo() ? 'items-table-admin' : 'items-table-branch' }}">
             <thead>
                 <tr>
-                    <th>Kode</th><th>Nama Item</th><th>Kategori</th><th>Harga</th>
+                    <th>Kode</th><th>Nama Item</th><th>Kategori</th><th>Stok</th>
                     @if(auth()->user()->isAdminHo())
                         <th>Cabang</th>
-                    @else
-                        <th>Stok</th>
                     @endif
                     <th>Aksi</th>
                 </tr>
@@ -52,11 +50,9 @@
                         <td>{{ $item->kode_items }}</td>
                         <td>{{ $item->nama_items }}</td>
                         <td>{{ $item->kategori ?? '-' }}</td>
-                        <td>Rp {{ number_format($item->harga_items, 0, ',', '.') }}</td>
+                        <td>{{ number_format((int) $item->stok_items, 0, ',', '.') }}</td>
                         @if(auth()->user()->isAdminHo())
                             <td>{{ $item->cabang->nama_cabang ?? '-' }}</td>
-                        @else
-                            <td>{{ number_format((int) $item->stok_items, 0, ',', '.') }}</td>
                         @endif
                         <td class="items-actions-cell">
                             <a href="{{ route('items.show', $item) }}" class="btn btn-sm btn-info items-glossy" title="Lihat detail" aria-label="Lihat detail item">
@@ -300,38 +296,32 @@
 
     .items-table-branch th:nth-child(1),
     .items-table-branch td:nth-child(1) {
-        width: 17%;
+        width: 20%;
     }
 
     .items-table-branch th:nth-child(2),
     .items-table-branch td:nth-child(2) {
-        width: 30%;
+        width: 35%;
     }
 
     .items-table-branch th:nth-child(3),
     .items-table-branch td:nth-child(3) {
-        width: 12%;
+        width: 15%;
     }
 
     .items-table-branch th:nth-child(4),
     .items-table-branch td:nth-child(4) {
-        width: 17%;
+        width: 15%;
     }
 
     .items-table-branch th:nth-child(5),
     .items-table-branch td:nth-child(5) {
-        width: 10%;
-    }
-
-    .items-table-branch th:nth-child(6),
-    .items-table-branch td:nth-child(6) {
-        width: 14%;
+        width: 15%;
     }
 
     .items-table td:nth-child(1),
     .items-table td:nth-child(3),
-    .items-table td:nth-child(4),
-    .items-table-branch td:nth-child(5) {
+    .items-table td:nth-child(4) {
         white-space: nowrap;
     }
 
