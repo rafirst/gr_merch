@@ -56,7 +56,7 @@
                 <div class="stockout-transaction-layout" id="stockoutTransactionLayout">
                 <div class="form-row stockout-transaction-row">
                     <div class="form-group">
-                        <label for="jenis">Jenis Keluar</label>
+                        <label for="jenis">Jenis Transaksi</label>
                         <select name="jenis_display" id="jenis" class="form-control" disabled>
                             <option value="{{ $stockOut->jenis }}" selected>{{ $stockOut->jenis === 'DO' ? 'DO' : ucfirst($stockOut->jenis) }}</option>
                         </select>
@@ -267,7 +267,7 @@
     </div>
     <div class="card-body">
         <div class="stockout-preview-meta">
-            <div><span>Jenis Keluar</span><strong id="previewJenis">{{ $stockOut->jenis === 'DO' ? 'DO' : ucfirst($stockOut->jenis) }}</strong></div>
+            <div><span>Jenis Transaksi</span><strong id="previewJenis">{{ $stockOut->jenis === 'DO' ? 'DO' : ucfirst($stockOut->jenis) }}</strong></div>
             <div id="previewCustomerWrap"><span>Customer</span><strong id="previewCustomer">-</strong></div>
             <div><span>PIC Penjualan</span><strong id="previewPic">-</strong></div>
             <div id="previewJenisPembayaranWrap"><span>Jenis Pembayaran</span><strong id="previewJenisPembayaran">-</strong></div>

@@ -143,7 +143,7 @@
     }
 
     /**
-     * Data Customer hanya relevan untuk jenis keluar "penjualan".
+     * Data Customer hanya relevan untuk jenis transaksi "penjualan".
      * Untuk DO & request section disembunyikan, field dinonaktifkan agar tidak
      * terkirim, dan nilainya dikosongkan supaya tidak tertinggal di preview.
      */
@@ -173,7 +173,7 @@
     }
 
     /**
-     * Referensi nomor transaksi pada preview mengikuti jenis keluar:
+     * Referensi nomor transaksi pada preview mengikuti jenis transaksi:
      * "Nomor SPK" untuk DO dan "Nomor IM" untuk request.
      * Jenis penjualan tidak memakai referensi ini sehingga keduanya disembunyikan.
      */

@@ -136,7 +136,7 @@
                 <h3 class="stockout-form-section-title" id="transactionDataTitle">Data Transaksi</h3>
                 <div class="stockout-detail-fields">
                     <div class="form-group">
-                        <label>Jenis Keluar</label>
+                        <label>Jenis Transaksi</label>
                         <div class="form-control stockout-readonly-value">{{ $stockOut->jenis === 'DO' ? 'DO' : ucfirst($stockOut->jenis) }}</div>
                     </div>
                     <div class="form-group">

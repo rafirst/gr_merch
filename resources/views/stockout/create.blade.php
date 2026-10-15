@@ -24,7 +24,7 @@
                 <div class="stockout-transaction-layout" id="stockoutTransactionLayout">
                 <div class="form-row stockout-transaction-row">
                     <div class="form-group">
-                        <label for="jenis">Jenis Keluar</label>
+                        <label for="jenis">Jenis Transaksi</label>
                         <select name="jenis" id="jenis" class="form-control" required>
                             <option value="penjualan" @selected(old('jenis', 'penjualan') === 'penjualan')>Penjualan</option>
                             <option value="DO" @selected(old('jenis') === 'DO')>DO</option>
@@ -182,7 +182,7 @@
     </div>
     <div class="card-body">
         <div class="stockout-preview-meta">
-            <div><span>Jenis Keluar</span><strong id="previewJenis">Penjualan</strong></div>
+            <div><span>Jenis Transaksi</span><strong id="previewJenis">Penjualan</strong></div>
             <div id="previewCustomerWrap"><span>Customer</span><strong id="previewCustomer">-</strong></div>
             <div><span>PIC Penjualan</span><strong id="previewPic">-</strong></div>
             <div id="previewJenisPembayaranWrap"><span>Jenis Pembayaran</span><strong id="previewJenisPembayaran">-</strong></div>

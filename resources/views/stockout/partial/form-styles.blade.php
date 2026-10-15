@@ -494,7 +494,7 @@
         margin-bottom: 1.25rem;
     }
 
-    /* DO & request hanya punya 3 box (Jenis Keluar, PIC, Nomor SPK/IM)
+    /* DO & request hanya punya 3 box (Jenis Transaksi, PIC, Nomor SPK/IM)
        agar tetap memenuhi lebar, jumlah kolomnya dikurangi menjadi 3. */
     .stockout-preview-meta.is-non-sales {
         grid-template-columns: repeat(3, minmax(0, 1fr));

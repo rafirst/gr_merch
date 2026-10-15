@@ -68,7 +68,7 @@
                 <div class="history-detail-row"><span>Cabang</span><strong>{{ $cabang?->nama_cabang ?? '-' }}</strong></div>
                 <div class="history-detail-row"><span>User Pengaju</span><strong>{{ $requester?->name ?? '-' }}</strong></div>
                 @if($isStockOut)
-                    <div class="history-detail-row"><span>Jenis Keluar</span><strong>{{ ($record->jenis ?? null) === 'DO' ? 'DO' : ucfirst($record->jenis ?? '-') }}</strong></div>
+                    <div class="history-detail-row"><span>Jenis Transaksi</span><strong>{{ ($record->jenis ?? null) === 'DO' ? 'DO' : ucfirst($record->jenis ?? '-') }}</strong></div>
                     <div class="history-detail-row"><span>Status</span><strong>{{ ucfirst($record->status ?? '-') }}</strong></div>
                     <div class="history-detail-row"><span>Jumlah</span><strong>{{ $record->jumlah }}</strong></div>
                     @if(($record->jenis ?? null) === 'request')

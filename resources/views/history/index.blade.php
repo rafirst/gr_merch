@@ -17,8 +17,8 @@
             @if(($tipe ?? '') === 'out')
                 <label class="history-field history-jenis-field">
                     <i class="fas fa-filter" aria-hidden="true"></i>
-                    <select name="jenis" class="form-control" onchange="this.form.submit()" aria-label="Pilih jenis barang keluar">
-                        <option value="">-- Jenis Keluar --</option>
+                    <select name="jenis" class="form-control" onchange="this.form.submit()" aria-label="Pilih jenis transaksi">
+                        <option value="">-- Jenis Transaksi --</option>
                         <option value="penjualan" {{ request('jenis') === 'penjualan' ? 'selected' : '' }}>Penjualan</option>
                         <option value="request" {{ request('jenis') === 'request' ? 'selected' : '' }}>Request</option>
                         <option value="DO" {{ request('jenis') === 'DO' ? 'selected' : '' }}>DO</option>
