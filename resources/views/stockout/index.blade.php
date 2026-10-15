@@ -57,7 +57,7 @@
                                         <i class="fas fa-pen"></i>
                                     </a>
                                 @endif
-                                @if($row->status === 'approved')
+                                @if($row->status === 'approved' && $row->jenis === 'penjualan')
                                     <button type="button" class="btn btn-sm stockout-payment-button{{ $row->bukti_pembayaran ? ' is-complete' : '' }}"
                                         title="Bukti pembayaran"
                                         aria-label="Input bukti pembayaran"
@@ -78,7 +78,7 @@
 </div>
 
 @foreach($stockOuts as $row)
-    @if($row->status === 'approved')
+    @if($row->status === 'approved' && $row->jenis === 'penjualan')
         <div class="modal fade stockout-payment-modal" id="paymentModal-{{ $row->id }}" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel-{{ $row->id }}" aria-hidden="true" data-backdrop="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 @php($isPaymentComplete = (bool) ($row->kode_pembayaran && $row->bukti_pembayaran))

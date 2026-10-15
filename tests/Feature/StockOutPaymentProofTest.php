@@ -15,19 +15,25 @@ class StockOutPaymentProofTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_payment_button_only_renders_for_approved_transactions(): void
+    public function test_payment_button_only_renders_for_approved_sales(): void
     {
         $cabang = $this->createCabang('C01');
         $admin = $this->createUser('admin_ho', null);
-        $approved = $this->createStockOut($cabang, $admin, 'approved');
-        $pending = $this->createStockOut($cabang, $admin, 'pending');
+        $approvedSale = $this->createStockOut($cabang, $admin, 'approved');
+        $pendingSale = $this->createStockOut($cabang, $admin, 'pending');
+        $approvedDo = $this->createStockOut($cabang, $admin, 'approved');
+        $approvedDo->update(['jenis' => 'DO']);
+        $approvedRequest = $this->createStockOut($cabang, $admin, 'approved');
+        $approvedRequest->update(['jenis' => 'request']);
 
         $this->actingAs($admin)->get(route('stockout.index'))
             ->assertOk()
             ->assertViewIs('stockout.index')
-            ->assertSee('data-target="#paymentModal-'.$approved->id.'"', false)
-            ->assertSee('id="paymentModal-'.$approved->id.'"', false)
-            ->assertDontSee('paymentModal-'.$pending->id, false);
+            ->assertSee('data-target="#paymentModal-'.$approvedSale->id.'"', false)
+            ->assertSee('id="paymentModal-'.$approvedSale->id.'"', false)
+            ->assertDontSee('paymentModal-'.$pendingSale->id, false)
+            ->assertDontSee('paymentModal-'.$approvedDo->id, false)
+            ->assertDontSee('paymentModal-'.$approvedRequest->id, false);
     }
 
     public function test_payment_proof_and_code_are_saved_for_approved_transactions(): void
