@@ -36,6 +36,45 @@ class StockOutPaymentProofTest extends TestCase
             ->assertDontSee('paymentModal-'.$approvedRequest->id, false);
     }
 
+    public function test_index_shows_reference_for_each_transaction_type(): void
+    {
+        $cabang = $this->createCabang('C01');
+        $admin = $this->createUser('admin_ho', null);
+        $sale = $this->createStockOut($cabang, $admin, 'approved');
+        $sale->update(['nama_customer' => 'Customer Penjualan']);
+        $deliveryOrder = $this->createStockOut($cabang, $admin, 'approved');
+        $deliveryOrder->update(['jenis' => 'DO', 'nomor_spk' => 'SPK-42']);
+        $request = $this->createStockOut($cabang, $admin, 'approved');
+        $request->update(['jenis' => 'request', 'nomor_im' => 'IM-93']);
+
+        $this->actingAs($admin)->get(route('stockout.index'))
+            ->assertOk()
+            ->assertSee('REFERENSI')
+            ->assertSee('Customer Penjualan')
+            ->assertSee('SPK-42')
+            ->assertSee('IM-93');
+    }
+
+    public function test_index_search_matches_spk_and_im_references(): void
+    {
+        $cabang = $this->createCabang('C01');
+        $admin = $this->createUser('admin_ho', null);
+        $deliveryOrder = $this->createStockOut($cabang, $admin, 'approved');
+        $deliveryOrder->update(['jenis' => 'DO', 'nomor_spk' => 'SPK-42']);
+        $request = $this->createStockOut($cabang, $admin, 'approved');
+        $request->update(['jenis' => 'request', 'nomor_im' => 'IM-93']);
+
+        $this->actingAs($admin)->get(route('stockout.index', ['search' => 'SPK-42']))
+            ->assertOk()
+            ->assertSee('SPK-42')
+            ->assertDontSee('IM-93');
+
+        $this->actingAs($admin)->get(route('stockout.index', ['search' => 'IM-93']))
+            ->assertOk()
+            ->assertSee('IM-93')
+            ->assertDontSee('SPK-42');
+    }
+
     public function test_payment_proof_and_code_are_saved_for_approved_transactions(): void
     {
         Storage::fake('public');

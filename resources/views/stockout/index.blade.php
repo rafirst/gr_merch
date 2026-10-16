@@ -5,7 +5,7 @@
 <div class="card">
     <div class="card-header stockout-card-header">
         <form class="form-inline stockout-filter-form" method="GET">
-            <input type="text" name="search" class="form-control" placeholder="Cari customer/item" value="{{ request('search') }}">
+            <input type="text" name="search" class="form-control" placeholder="Cari customer/referensi/item" value="{{ request('search') }}">
             <select name="jenis" class="form-control mr-2" onchange="this.form.submit()">
                 <option value="">Semua Jenis</option>
                 <option value="penjualan" {{ request('jenis') == 'penjualan' ? 'selected' : '' }}>Penjualan</option>
@@ -24,8 +24,8 @@
         <a href="{{ route('stockout.create') }}" class="btn stockout-create-button"><i class="fas fa-plus"></i> Items</a>
     </div>
     <div class="card-body p-0">
-        <table class="table table-striped mb-0">
-            <thead><tr><th>Item</th><th>Nama Customer</th><th>Cabang</th><th>Jenis</th><th>Status</th><th>Aksi</th></tr></thead>
+        <table class="table table-striped mb-0 stockout-table">
+            <thead><tr><th>ITEM</th><th>REFERENSI</th><th>CABANG</th><th>JENIS</th><th>STATUS</th><th>AKSI</th></tr></thead>
             <tbody>
                 @forelse($stockOuts as $row)
                     <tr>
@@ -35,7 +35,17 @@
                                 <span class="stockout-more-items">+{{ $row->item_count - 1 }}</span>
                             @endif
                         </td>
-                        <td>{{ $row->nama_customer ?: '-' }}</td>
+                        <td>
+                            @if($row->jenis === 'penjualan')
+                                {{ $row->nama_customer ?: '-' }}
+                            @elseif($row->jenis === 'DO')
+                                {{ $row->nomor_spk ?: '-' }}
+                            @elseif($row->jenis === 'request')
+                                {{ $row->nomor_im ?: '-' }}
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td>{{ $row->cabang->nama_cabang ?? '-' }}</td>
                         <td><span class="badge stockout-badge stockout-type-badge">{{ ucfirst($row->jenis) }}</span></td>
                         <td>
@@ -184,6 +194,45 @@
 @endforeach
 
 <style>
+    .stockout-table {
+        width: 100%;
+        table-layout: fixed;
+        font-size: 0.85rem;
+    }
+
+    .stockout-table th,
+    .stockout-table td {
+        padding: 0.55rem 0.5rem;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+
+    .stockout-table th:nth-child(1) {
+        width: 24%;
+    }
+
+    .stockout-table th:nth-child(2) {
+        width: 20%;
+    }
+
+    .stockout-table th:nth-child(3) {
+        width: 20%;
+    }
+
+    .stockout-table th:nth-child(4),
+    .stockout-table th:nth-child(5) {
+        width: 11%;
+    }
+
+    .stockout-table th:nth-child(6) {
+        width: 14%;
+    }
+
+    .stockout-table .stockout-badge {
+        padding: 0.25em 0.45em;
+        font-size: 0.68rem;
+    }
+
     .stockout-card-header {
         display: flex !important;
         align-items: center;
@@ -381,18 +430,22 @@
     .stockout-action-group {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.25rem;
         white-space: nowrap;
     }
 
     .stockout-action-group .btn-sm {
         display: inline-flex;
-        width: 32px;
-        height: 32px;
-        flex: 0 0 32px;
+        width: 27px;
+        height: 27px;
+        flex: 0 0 27px;
         align-items: center;
         justify-content: center;
         padding: 0;
+    }
+
+    .stockout-action-group .btn-sm i {
+        font-size: 0.75rem;
     }
 
     /* ===== Payment popup: blur + centered, dark theme ===== */

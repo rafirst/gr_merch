@@ -39,6 +39,8 @@ class StockOutController extends Controller
             $search = $request->search;
             $query->where(function ($searchQuery) use ($search): void {
                 $searchQuery->where('nama_customer', 'like', "%{$search}%")
+                    ->orWhere('nomor_spk', 'like', "%{$search}%")
+                    ->orWhere('nomor_im', 'like', "%{$search}%")
                     ->orWhereHas('item', function ($itemQuery) use ($search): void {
                         $itemQuery->where('nama_items', 'like', "%{$search}%")
                             ->orWhere('kode_items', 'like', "%{$search}%");

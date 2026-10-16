@@ -13,22 +13,28 @@ class HistoryPaymentCodeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_stock_out_history_shows_payment_code_instead_of_the_creator_name(): void
+    public function test_stock_out_history_shows_reference_based_on_transaction_type(): void
     {
         $cabang = $this->createCabang('C01');
         $admin = $this->createUser('admin_ho', null);
-        $stockOut = $this->createStockOut($cabang, $admin);
-        $stockOut->update(['kode_pembayaran' => 'BAY-2026-000123']);
+        $sale = $this->createStockOut($cabang, $admin);
+        $sale->update(['nama_customer' => 'Customer Histori']);
+        $deliveryOrder = $this->createStockOut($cabang, $admin, 'DO');
+        $deliveryOrder->update(['nomor_spk' => 'SPK-HIST-123']);
+        $request = $this->createStockOut($cabang, $admin, 'request');
+        $request->update(['nomor_im' => 'IM-HIST-456']);
 
         $this->actingAs($admin)->get(route('history.index', ['tipe' => 'out']))
             ->assertOk()
             ->assertViewIs('history.index')
-            ->assertSee('Kode Pembayaran')
-            ->assertSee('BAY-2026-000123')
+            ->assertSee('Referensi')
+            ->assertSee('Customer Histori')
+            ->assertSee('SPK-HIST-123')
+            ->assertSee('IM-HIST-456')
             ->assertDontSee('<th>Oleh</th>', false);
     }
 
-    public function test_stock_out_history_renders_a_placeholder_when_payment_code_is_empty(): void
+    public function test_stock_out_history_shows_placeholder_when_reference_is_empty(): void
     {
         $cabang = $this->createCabang('C01');
         $admin = $this->createUser('admin_ho', null);
@@ -36,7 +42,8 @@ class HistoryPaymentCodeTest extends TestCase
 
         $this->actingAs($admin)->get(route('history.index', ['tipe' => 'out']))
             ->assertOk()
-            ->assertSee('history-payment-code-empty', false);
+            ->assertSee('<span class="history-reference">', false)
+            ->assertSee('>-</span>', false);
     }
 
     public function test_stock_out_history_respects_the_branch_scope(): void
@@ -46,14 +53,14 @@ class HistoryPaymentCodeTest extends TestCase
         $admin = $this->createUser('admin_ho', null);
         $staff = $this->createUser('staff_cabang', $ownCabang->id);
         $visible = $this->createStockOut($ownCabang, $admin);
-        $visible->update(['kode_pembayaran' => 'BAY-VISIBLE']);
+        $visible->update(['nama_customer' => 'Customer Terlihat']);
         $hidden = $this->createStockOut($otherCabang, $admin);
-        $hidden->update(['kode_pembayaran' => 'BAY-HIDDEN']);
+        $hidden->update(['nama_customer' => 'Customer Tersembunyi']);
 
         $this->actingAs($staff)->get(route('history.index', ['tipe' => 'out']))
             ->assertOk()
-            ->assertSee('BAY-VISIBLE')
-            ->assertDontSee('BAY-HIDDEN');
+            ->assertSee('Customer Terlihat')
+            ->assertDontSee('Customer Tersembunyi');
     }
 
     private function createCabang(string $code): Cabang

@@ -39,10 +39,23 @@ class ExportImportController extends Controller
         return Excel::download(new ItemsImportTemplateExport, 'template-import-items-gr-merch.xlsx');
     }
 
-    public function exportHistory()
+    public function exportHistory(Request $request)
     {
-        $export = new HistoryExport;
+        $filters = $this->historyFilters($request);
+        $export = new HistoryExport($filters);
         $rows = $export->collection();
+        $sectionTitle = match ($filters['tipe'] ?? null) {
+            'in' => 'Barang Masuk',
+            'out' => 'Barang Keluar',
+            'approval' => 'Items Approval',
+            default => 'Histori Transaksi',
+        };
+        $subtitle = match ($filters['tipe'] ?? null) {
+            'in' => 'Riwayat transaksi barang masuk sesuai filter yang dipilih.',
+            'out' => 'Riwayat transaksi barang keluar sesuai filter yang dipilih.',
+            'approval' => 'Riwayat persetujuan sesuai filter yang dipilih.',
+            default => 'Seluruh riwayat transaksi sesuai filter yang dipilih.',
+        };
 
         if ($rows->isEmpty()) {
             /** @var User|null $user */
@@ -61,23 +74,37 @@ class ExportImportController extends Controller
         return $this->downloadPdf(
             $export,
             'Laporan Histori Transaksi',
-            'Catatan transaksi barang keluar yang tercatat dalam sistem.',
-            'Histori Transaksi',
+            $subtitle,
+            $sectionTitle,
             'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.pdf',
             $rows,
         );
     }
 
-    public function exportHistoryExcel()
+    public function exportHistoryExcel(Request $request)
     {
         /** @var User|null $user */
         $user = Auth::user();
         abort_unless($user?->isAdminHo(), 403, 'Hanya administrator yang dapat mengekspor Excel.');
 
         return Excel::download(
-            new HistoryExport,
+            new HistoryExport($this->historyFilters($request)),
             'histori-transaksi-gr-merch-'.now()->format('Ymd-His').'.xlsx',
         );
+    }
+
+    /**
+     * @return array{tipe?: string|null, jenis?: string|null, item?: string|null, dari?: string|null, sampai?: string|null}
+     */
+    private function historyFilters(Request $request): array
+    {
+        return $request->validate([
+            'tipe' => 'nullable|in:in,out,approval',
+            'jenis' => 'nullable|in:penjualan,request,DO',
+            'item' => 'nullable|string|max:255',
+            'dari' => 'nullable|date',
+            'sampai' => 'nullable|date',
+        ]);
     }
 
     public function exportStockIn()

@@ -6,6 +6,7 @@ use App\Exports\HistoryExport;
 use App\Models\Cabang;
 use App\Models\Item;
 use App\Models\StockIn;
+use App\Models\StockInEditRequest;
 use App\Models\StockOut;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -203,6 +204,106 @@ class ExportPdfTest extends TestCase
         }
     }
 
+    public function test_history_export_matches_the_selected_summary_type_and_filters(): void
+    {
+        $cabang = Cabang::create([
+            'kode_cabang' => 'TAG-06',
+            'nama_cabang' => 'TAG Cabang Filter',
+        ]);
+        /** @var User $admin */
+        $admin = User::factory()->create([
+            'role' => 'admin_ho',
+            'cabang_id' => null,
+        ]);
+        $items = collect([
+            ['ITEM-IN-FILTER', 'Barang Masuk Export'],
+            ['ITEM-SALE-FILTER', 'Penjualan Export'],
+            ['ITEM-DO-FILTER', 'DO Export'],
+            ['ITEM-APPROVAL-FILTER', 'Approval Export'],
+        ])->mapWithKeys(fn (array $data): array => [
+            $data[0] => Item::create([
+                'kode_items' => $data[0],
+                'nama_items' => $data[1],
+                'kategori' => 'jacket',
+                'harga_items' => 100000,
+                'stok_items' => 5,
+                'harga_jual' => 120000,
+                'cabang_id' => $cabang->id,
+            ]),
+        ]);
+
+        $stockIn = StockIn::create([
+            'item_id' => $items['ITEM-IN-FILTER']->id,
+            'cabang_id' => $cabang->id,
+            'jumlah' => 2,
+            'tanggal' => '2026-10-12',
+            'sumber' => 'Input manual',
+            'user_id' => $admin->id,
+        ]);
+        StockOut::create([
+            'item_id' => $items['ITEM-SALE-FILTER']->id,
+            'cabang_id' => $cabang->id,
+            'jumlah' => 1,
+            'jenis' => 'penjualan',
+            'nama_customer' => 'Customer Filter',
+            'status' => 'approved',
+            'tanggal' => '2026-10-11',
+            'user_id' => $admin->id,
+        ]);
+        $deliveryOrder = StockOut::create([
+            'item_id' => $items['ITEM-DO-FILTER']->id,
+            'cabang_id' => $cabang->id,
+            'jumlah' => 1,
+            'jenis' => 'DO',
+            'nomor_spk' => 'SPK-FILTER',
+            'status' => 'approved',
+            'tanggal' => '2026-10-10',
+            'user_id' => $admin->id,
+        ]);
+        $approval = StockOut::create([
+            'item_id' => $items['ITEM-APPROVAL-FILTER']->id,
+            'cabang_id' => $cabang->id,
+            'jumlah' => 1,
+            'jenis' => 'request',
+            'status' => 'approved',
+            'tanggal' => '2026-10-09',
+            'user_id' => $admin->id,
+            'approved_by' => $admin->id,
+            'approved_at' => '2026-10-09 12:00:00',
+        ]);
+        StockInEditRequest::create([
+            'stock_in_id' => $stockIn->id,
+            'old_item_id' => $items['ITEM-IN-FILTER']->id,
+            'new_item_id' => $items['ITEM-SALE-FILTER']->id,
+            'old_jumlah' => 2,
+            'new_jumlah' => 3,
+            'old_tanggal' => '2026-10-12',
+            'new_tanggal' => '2026-10-13',
+            'requested_by' => $admin->id,
+            'status' => 'approved',
+            'approved_by' => $admin->id,
+            'approved_at' => '2026-10-13 12:00:00',
+        ]);
+
+        $this->actingAs($admin);
+        $summary = new HistoryExport;
+        $stockInExport = new HistoryExport(['tipe' => 'in']);
+        $stockOutExport = new HistoryExport(['tipe' => 'out', 'jenis' => 'DO', 'item' => 'DO Export']);
+        $approvalExport = new HistoryExport(['tipe' => 'approval', 'item' => 'Approval Export']);
+
+        $this->assertCount(4, $summary->collection());
+        $this->assertCount(4, (new HistoryExport(['jenis' => 'DO']))->collection());
+        $this->assertCount(1, $stockInExport->collection());
+        $this->assertSame(['Tanggal', 'Item', 'Cabang', 'Jumlah', 'Oleh'], $stockInExport->headings());
+        $this->assertCount(1, $stockOutExport->collection());
+        $this->assertSame('SPK-FILTER', $stockOutExport->map($deliveryOrder)[5]);
+        $this->assertSame(['Tanggal', 'Item', 'Jumlah', 'Jenis', 'Status', 'Referensi', 'Pembayaran'], $stockOutExport->headings());
+        $this->assertCount(1, $approvalExport->collection());
+        $this->assertSame('Approval Transaksi', $approvalExport->map($approval)[4]);
+        $this->assertSame('Edit Stok', $approvalExport->map(StockInEditRequest::first())[4]);
+        $this->assertSame('Tipe', $approvalExport->headings()[4]);
+    }
+
     public function test_history_index_hides_excel_option_for_staff_cabang(): void
     {
         $cabang = Cabang::create([
@@ -230,6 +331,27 @@ class ExportPdfTest extends TestCase
 
         $adminResponse->assertOk();
         $adminResponse->assertSee(route('history.export.excel'), false);
+    }
+
+    public function test_history_export_links_keep_the_selected_filters(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->create([
+            'role' => 'admin_ho',
+            'cabang_id' => null,
+        ]);
+        $filters = [
+            'tipe' => 'out',
+            'jenis' => 'DO',
+            'item' => 'Umbrella',
+            'dari' => '2026-10-01',
+            'sampai' => '2026-10-16',
+        ];
+
+        $this->actingAs($admin)->get(route('history.index', $filters))
+            ->assertOk()
+            ->assertSee(e(route('history.export', $filters)), false)
+            ->assertSee(e(route('history.export.excel', $filters)), false);
     }
 
     public function test_stock_out_invoice_can_be_downloaded_as_a_pdf(): void

@@ -99,7 +99,7 @@
 
     @elseif(($tipe ?? null) === 'out')
         <table class="table table-striped mb-0 history-data-table history-out-table">
-            <thead><tr><th>Tanggal <i class="fas fa-sort ml-1"></i></th><th>Item <i class="fas fa-sort ml-1"></i></th><th>Jumlah <i class="fas fa-sort ml-1"></i></th><th>Jenis</th><th>Status</th><th>Kode Pembayaran</th><th>Pembayaran</th><th class="text-center">Aksi</th></tr></thead>
+            <thead><tr><th>Tanggal <i class="fas fa-sort ml-1"></i></th><th>Item <i class="fas fa-sort ml-1"></i></th><th>Jumlah <i class="fas fa-sort ml-1"></i></th><th>Jenis</th><th>Status</th><th>Referensi</th><th>Pembayaran</th><th class="text-center">Aksi</th></tr></thead>
             <tbody>
             @forelse($riwayat as $row)
                 <tr>
@@ -108,13 +108,12 @@
                     <td><span class="badge history-quantity-badge history-out-badge">-{{ $row->jumlah }}</span></td>
                     <td><span class="badge history-type-badge">{{ ucfirst($row->jenis) }}</span></td>
                     <td><span class="badge history-status-badge">{{ ucfirst($row->status) }}</span></td>
-                    <td>
-                        @if($row->kode_pembayaran)
-                            <span class="history-payment-code" title="{{ $row->kode_pembayaran }}">{{ $row->kode_pembayaran }}</span>
-                        @else
-                            <span class="history-payment-code-empty">-</span>
-                        @endif
-                    </td>
+                    <td><span class="history-reference">{{ match ($row->jenis) {
+                        'penjualan' => $row->nama_customer ?: '-',
+                        'DO' => $row->nomor_spk ?: '-',
+                        'request' => $row->nomor_im ?: '-',
+                        default => '-',
+                    } }}</span></td>
                     <td>{{ $row->jenis_pembayaran ? ucfirst($row->jenis_pembayaran) : '-' }}</td>
                     <td class="text-center"><a href="{{ route('history.show', ['type' => 'out', 'id' => $row->id]) }}" class="btn btn-sm history-action-button" title="Lihat detail" aria-label="Lihat detail histori barang keluar"><i class="fas fa-eye"></i></a></td>
                 </tr>
@@ -231,13 +230,13 @@
             </button>
         </div>
         <div class="history-export-options">
-            <a href="{{ route('history.export') }}" class="history-export-option history-export-option-pdf">
+            <a href="{{ route('history.export', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) }}" class="history-export-option history-export-option-pdf">
                 <span class="history-export-option-icon"><i class="fas fa-file-pdf" aria-hidden="true"></i></span>
                 <span class="history-export-option-copy"><strong>Export PDF</strong><small>Unduh laporan dalam format PDF</small></span>
                 <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
             </a>
             @if(auth()->user()?->isAdminHo())
-            <a href="{{ route('history.export.excel') }}" class="history-export-option history-export-option-excel">
+            <a href="{{ route('history.export.excel', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) }}" class="history-export-option history-export-option-excel">
                 <span class="history-export-option-icon"><i class="fas fa-file-excel" aria-hidden="true"></i></span>
                 <span class="history-export-option-copy"><strong>Export Excel</strong><small>Unduh data dalam format XLSX</small></span>
                 <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
