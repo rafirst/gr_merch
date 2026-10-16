@@ -29,22 +29,22 @@
             <tbody>
                 @forelse($stockOuts as $row)
                     <tr>
-                        <td>
-                            {{ $row->item->nama_items ?? '-' }}
-                            @if(($row->item_count ?? 1) > 1)
-                                <span class="stockout-more-items">+{{ $row->item_count - 1 }}</span>
-                            @endif
+                        <td class="stockout-item-column">
+                            <div class="stockout-item-cell">
+                                <span class="stockout-item-name" title="{{ $row->item->nama_items ?? '-' }}">{{ $row->item->nama_items ?? '-' }}</span>
+                                @if(($row->item_count ?? 1) > 1)
+                                    <span class="stockout-more-items">+{{ $row->item_count - 1 }}</span>
+                                @endif
+                            </div>
                         </td>
                         <td>
-                            @if($row->jenis === 'penjualan')
-                                {{ $row->nama_customer ?: '-' }}
-                            @elseif($row->jenis === 'DO')
-                                {{ $row->nomor_spk ?: '-' }}
-                            @elseif($row->jenis === 'request')
-                                {{ $row->nomor_im ?: '-' }}
-                            @else
-                                -
-                            @endif
+                            @php($reference = match ($row->jenis) {
+                                'penjualan' => $row->nama_customer ?: '-',
+                                'DO' => $row->nomor_spk ?: '-',
+                                'request' => $row->nomor_im ?: '-',
+                                default => '-',
+                            })
+                            <span class="stockout-reference" title="{{ $reference }}">{{ $reference }}</span>
                         </td>
                         <td>{{ $row->cabang->nama_cabang ?? '-' }}</td>
                         <td><span class="badge stockout-badge stockout-type-badge">{{ ucfirst($row->jenis) }}</span></td>
@@ -205,6 +205,8 @@
         padding: 0.55rem 0.5rem;
         vertical-align: middle;
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .stockout-table th:nth-child(1) {
@@ -231,6 +233,30 @@
     .stockout-table .stockout-badge {
         padding: 0.25em 0.45em;
         font-size: 0.68rem;
+    }
+
+    .stockout-item-cell {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .stockout-item-name,
+    .stockout-reference {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .stockout-item-name {
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .stockout-reference {
+        max-width: 100%;
     }
 
     .stockout-card-header {
@@ -417,7 +443,7 @@
 
     .stockout-more-items {
         display: inline-block;
-        margin-left: 0.35rem;
+        flex: 0 0 auto;
         padding: 0.1rem 0.35rem;
         border-radius: 4px;
         background: #e30613;
