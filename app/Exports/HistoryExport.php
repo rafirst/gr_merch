@@ -174,13 +174,13 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
                 $row->item->nama_items ?? '-',
                 $row->jumlah,
                 ucfirst($row->jenis),
-                ucfirst($row->status),
                 match ($row->jenis) {
                     'penjualan' => $row->nama_customer ?: '-',
                     'DO' => $row->nomor_spk ?: '-',
                     'request' => $row->nomor_im ?: '-',
                     default => '-',
                 },
+                ucfirst($row->status),
                 $row->jenis_pembayaran ? ucfirst($row->jenis_pembayaran) : '-',
             ];
         }
