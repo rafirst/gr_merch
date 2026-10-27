@@ -61,11 +61,16 @@
                         <div class="transfer-item-identity">
                             <div class="transfer-item-photo" data-item-photo><i class="fas fa-box"></i></div>
                             <div class="transfer-item-select-wrap">
-                                <input type="text" class="form-control transfer-item-search" list="transferItemSuggestions" value="{{ $selectedItem ? $selectedItem->kode_items.' - '.$selectedItem->nama_items : '' }}" placeholder="Ketik kode/nama item" autocomplete="off" required aria-label="Cari item">
+                                <div class="transfer-item-search-wrapper">
+                                    <input type="text" class="form-control transfer-item-search" value="{{ $selectedItem ? $selectedItem->kode_items.' - '.$selectedItem->nama_items : '' }}" placeholder="Ketik kode atau nama item..." autocomplete="off" required aria-label="Cari item" aria-haspopup="listbox" aria-expanded="false">
+                                    <div class="transfer-item-options" role="listbox">
+                                        <p class="transfer-item-no-results" hidden>Item tidak ditemukan.</p>
+                                    </div>
+                                </div>
                                 <select name="items[{{ $index }}][item_id]" class="transfer-item-select" aria-hidden="true" tabindex="-1">
                                     <option value="">Pilih item</option>
                                     @foreach($items as $item)
-                                        <option value="{{ $item->id }}" data-cabang="{{ $item->cabang_id }}" data-nama="{{ $item->nama_items }}" data-stok="{{ (int) $item->stok_items + (int) $stockAdjustments->get($item->id, 0) }}" data-foto="{{ $item->foto ? url('storage/'.ltrim($item->foto, '/')) : '' }}" {{ (string) ($formItem['item_id'] ?? '') === (string) $item->id ? 'selected' : '' }}>{{ $item->kode_items }} - {{ $item->nama_items }}</option>
+                                        <option value="{{ $item->id }}" data-cabang="{{ $item->cabang_id }}" data-cabang-nama="{{ $item->cabang->nama_cabang ?? '-' }}" data-kode="{{ $item->kode_items }}" data-nama="{{ $item->nama_items }}" data-stok="{{ (int) $item->stok_items + (int) $stockAdjustments->get($item->id, 0) }}" data-foto="{{ $item->foto ? url('storage/'.ltrim($item->foto, '/')) : '' }}" {{ (string) ($formItem['item_id'] ?? '') === (string) $item->id ? 'selected' : '' }}>{{ $item->kode_items }} - {{ $item->nama_items }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -76,8 +81,6 @@
                     </div>
                 @endforeach
             </div>
-            <datalist id="transferItemSuggestions"></datalist>
-
             @if($errors->any())
                 <div class="alert alert-danger mt-3"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
             @endif
@@ -144,13 +147,18 @@
         <div class="transfer-item-identity">
             <div class="transfer-item-photo" data-item-photo><i class="fas fa-box"></i></div>
             <div class="transfer-item-select-wrap">
-                <input type="text" class="form-control transfer-item-search" list="transferItemSuggestions" placeholder="Ketik kode/nama item" autocomplete="off" required aria-label="Cari item">
-                <select name="items[__INDEX__][item_id]" class="transfer-item-select" aria-hidden="true" tabindex="-1">
-                    <option value="">Pilih item</option>
-                    @foreach($items as $item)
-                        <option value="{{ $item->id }}" data-cabang="{{ $item->cabang_id }}" data-nama="{{ $item->nama_items }}" data-stok="{{ (int) $item->stok_items + (int) $stockAdjustments->get($item->id, 0) }}" data-foto="{{ $item->foto ? url('storage/'.ltrim($item->foto, '/')) : '' }}">{{ $item->kode_items }} - {{ $item->nama_items }}</option>
-                    @endforeach
-                </select>
+            <div class="transfer-item-search-wrapper">
+                <input type="text" class="form-control transfer-item-search" placeholder="Ketik kode atau nama item..." autocomplete="off" required aria-label="Cari item" aria-haspopup="listbox" aria-expanded="false">
+                <div class="transfer-item-options" role="listbox">
+                    <p class="transfer-item-no-results" hidden>Item tidak ditemukan.</p>
+                </div>
+            </div>
+            <select name="items[__INDEX__][item_id]" class="transfer-item-select" aria-hidden="true" tabindex="-1">
+                <option value="">Pilih item</option>
+                @foreach($items as $item)
+                    <option value="{{ $item->id }}" data-cabang="{{ $item->cabang_id }}" data-cabang-nama="{{ $item->cabang->nama_cabang ?? '-' }}" data-kode="{{ $item->kode_items }}" data-nama="{{ $item->nama_items }}" data-stok="{{ (int) $item->stok_items + (int) $stockAdjustments->get($item->id, 0) }}" data-foto="{{ $item->foto ? url('storage/'.ltrim($item->foto, '/')) : '' }}">{{ $item->kode_items }} - {{ $item->nama_items }}</option>
+                @endforeach
+            </select>
             </div>
         </div>
         <div class="transfer-stock-cell"><strong data-item-stock>-</strong><small>pcs</small></div>
@@ -191,8 +199,20 @@
     .transfer-item-photo img { width:100%; height:100%; object-fit:contain; }
     .transfer-item-select-wrap { min-width:0; flex:1 1 auto; }
     .transfer-item-select { display:none; }
-    .transfer-item-search { height:27px; padding:.15rem .35rem; border:0; background-color:transparent !important; color:#f4f7fa; font-size:.72rem; font-weight:700; }
+    .transfer-item-search-wrapper { position:relative; }
+    .transfer-item-search { height:27px; padding:.15rem 1.6rem .15rem .35rem; border:0; background-color:transparent !important; background-image:linear-gradient(45deg,transparent 50%,#f70008 50%),linear-gradient(135deg,#f70008 50%,transparent 50%); background-position:calc(100% - .8rem) 52%,calc(100% - .45rem) 52%; background-size:.35rem .35rem,.35rem .35rem; background-repeat:no-repeat; color:#f4f7fa; font-size:.72rem; font-weight:700; }
     .transfer-item-search::placeholder { color:rgba(244,247,250,.5); font-weight:400; }
+    .transfer-item-row:focus-within { position:relative; z-index:5; }
+    .transfer-item-options { position:absolute; z-index:1050; top:calc(100% + .35rem); right:0; left:0; display:none; max-height:250px; overflow-y:auto; padding:.25rem; border:1px solid rgba(247,0,8,.65); border-radius:4px; background:rgba(3,10,17,.98); box-shadow:0 .8rem 1.8rem rgba(0,0,0,.45); }
+    .transfer-item-options.is-open { display:block; }
+    .transfer-item-option { display:flex; width:100%; align-items:center; justify-content:space-between; gap:.5rem; padding:.45rem .5rem; border:0; border-bottom:1px solid rgba(255,255,255,.08); background:transparent; color:#f4f7fa; text-align:left; cursor:pointer; }
+    .transfer-item-option:last-of-type { border-bottom:0; }
+    .transfer-item-option:hover, .transfer-item-option:focus { outline:0; border-radius:3px; background:linear-gradient(90deg,rgba(247,0,8,.22),rgba(247,0,8,.06)); }
+    .transfer-item-option-main { display:flex; min-width:0; flex-direction:column; gap:.1rem; }
+    .transfer-item-option-main strong { overflow:hidden; color:#fff; font-size:.7rem; text-overflow:ellipsis; white-space:nowrap; }
+    .transfer-item-option-main small { color:rgba(244,247,250,.62); font-size:.6rem; }
+    .transfer-item-option-stock { flex:0 0 auto; padding:.16rem .3rem; border:1px solid rgba(247,0,8,.5); border-radius:3px; color:#ff6268; font-size:.58rem; font-weight:700; }
+    .transfer-item-no-results { margin:0; padding:.55rem; color:rgba(244,247,250,.62); font-size:.65rem; text-align:center; }
     .transfer-stock-cell { display:flex; align-items:baseline; justify-content:center; gap:.18rem; color:rgba(244,247,250,.78); font-size:.7rem; }
     .transfer-stock-cell small { color:rgba(244,247,250,.45); font-size:.58rem; }
     .transfer-quantity-input { height:29px; padding:.2rem .3rem; text-align:center; font-size:.72rem; }
@@ -288,7 +308,6 @@
     const isEditingTransfer = @json($isEditing);
     {{-- const stockSummaries = @json($itemStockSummaries); --}}
     const itemRows = document.getElementById('transferItems');
-    const itemSuggestions = document.getElementById('transferItemSuggestions');
     const fromCabang = document.getElementById('fromCabang');
     const toCabang = document.getElementById('toCabang');
     const rowTemplate = document.getElementById('transferItemRowTemplate');
@@ -331,9 +350,12 @@
         const chosen = select.selectedOptions[0];
         const hasItem = Boolean(chosen?.value);
         const stock = hasItem ? Number(chosen.dataset.stok) : 0;
+        const options = row.querySelector('.transfer-item-options');
         if (syncSearch) {
             searchInput.value = hasItem ? chosen.textContent.trim() : '';
             searchInput.setCustomValidity('');
+            options.classList.remove('is-open');
+            searchInput.setAttribute('aria-expanded', 'false');
         }
         stockLabel.textContent = hasItem ? stock : '-';
         quantityInput.max = hasItem ? stock : '';
@@ -352,33 +374,61 @@
         }
     }
 
-    function updateItemSuggestions(sourceId) {
-        const select = itemRows.querySelector('.transfer-item-select');
-        const suggestions = Array.from(select.options)
-            .filter((option) => option.value !== '' && option.dataset.cabang === sourceId)
-            .map((option) => {
-                const suggestion = document.createElement('option');
-                suggestion.value = option.textContent.trim();
+    function filterTransferItems(searchInput) {
+        const row = searchInput.closest('[data-transfer-item-row]');
+        const select = row.querySelector('.transfer-item-select');
+        const optionsList = row.querySelector('.transfer-item-options');
+        const noResults = optionsList.querySelector('.transfer-item-no-results');
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        let visibleItems = 0;
 
-                return suggestion;
+        optionsList.querySelectorAll('.transfer-item-option').forEach((option) => option.remove());
+
+        Array.from(select.options)
+            .filter((option) => {
+                if (!option.value || option.dataset.cabang !== fromCabang.value) {
+                    return false;
+                }
+
+                const searchableText = `${option.dataset.kode} ${option.dataset.nama} ${option.dataset.cabangNama}`.toLocaleLowerCase();
+
+                return !query || searchableText.includes(query);
+            })
+            .forEach((item) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'transfer-item-option';
+                button.dataset.itemId = item.value;
+                button.setAttribute('role', 'option');
+
+                const main = document.createElement('span');
+                main.className = 'transfer-item-option-main';
+                const name = document.createElement('strong');
+                name.textContent = item.dataset.nama;
+                const details = document.createElement('small');
+                details.textContent = `${item.dataset.kode} · ${item.dataset.cabangNama}`;
+                main.append(name, details);
+
+                const stock = document.createElement('span');
+                stock.className = 'transfer-item-option-stock';
+                stock.textContent = `Stok ${item.dataset.stok}`;
+                button.append(main, stock);
+                optionsList.insertBefore(button, noResults);
+                visibleItems += 1;
             });
 
-        itemSuggestions.replaceChildren(...suggestions);
+        noResults.textContent = fromCabang.value ? 'Item tidak ditemukan.' : 'Pilih cabang asal terlebih dahulu.';
+        noResults.hidden = visibleItems > 0;
+        optionsList.classList.add('is-open');
+        searchInput.setAttribute('aria-expanded', 'true');
     }
 
     function updateItemSelection(searchInput) {
         const row = searchInput.closest('[data-transfer-item-row]');
-        const select = row.querySelector('.transfer-item-select');
-        const searchValue = searchInput.value.trim().toLocaleLowerCase();
-        const matchingOption = Array.from(select.options).find((option) => {
-            return option.value !== ''
-                && option.dataset.cabang === fromCabang.value
-                && option.textContent.trim().toLocaleLowerCase() === searchValue;
-        });
-
-        select.value = matchingOption?.value ?? '';
-        searchInput.setCustomValidity(searchValue && !matchingOption ? 'Pilih item dari daftar yang tersedia.' : '');
+        row.querySelector('.transfer-item-select').value = '';
+        searchInput.setCustomValidity(searchInput.value.trim() ? 'Pilih item dari daftar yang tersedia.' : '');
         updateRow(row, false);
+        filterTransferItems(searchInput);
         updateSummary();
     }
 
@@ -390,7 +440,6 @@
         routeHint.innerHTML = sameBranch
             ? '<i class="fas fa-exclamation-circle"></i> Cabang asal dan tujuan harus berbeda.'
             : '<i class="fas fa-info-circle"></i> Cabang asal dan tujuan harus berbeda.';
-        updateItemSuggestions(fromCabang.value);
         itemRows.querySelectorAll('[data-transfer-item-row]').forEach(updateRow);
         updateSummary();
     }
@@ -549,6 +598,11 @@
             updateItemSelection(event.target);
         }
     });
+    itemRows.addEventListener('focusin', (event) => {
+        if (event.target.matches('.transfer-item-search')) {
+            filterTransferItems(event.target);
+        }
+    });
     itemRows.addEventListener('input', (event) => {
         if (event.target.matches('.transfer-quantity-input')) {
             const row = event.target.closest('[data-transfer-item-row]');
@@ -558,6 +612,24 @@
         }
     });
     itemRows.addEventListener('click', (event) => {
+        const itemOption = event.target.closest('.transfer-item-option');
+        if (itemOption) {
+            const row = itemOption.closest('[data-transfer-item-row]');
+            const select = row.querySelector('.transfer-item-select');
+            const selectedOption = Array.from(select.options).find((option) => option.value === itemOption.dataset.itemId);
+            const searchInput = row.querySelector('.transfer-item-search');
+
+            if (selectedOption && selectedOption.dataset.cabang === fromCabang.value) {
+                select.value = selectedOption.value;
+                searchInput.value = selectedOption.textContent.trim();
+                searchInput.setCustomValidity('');
+                updateRow(row);
+                updateSummary();
+            }
+
+            return;
+        }
+
         const removeButton = event.target.closest('.transfer-remove-button');
         if (removeButton && itemRows.querySelectorAll('[data-transfer-item-row]').length > 1) {
             removeButton.closest('[data-transfer-item-row]').remove();
@@ -567,6 +639,12 @@
     document.getElementById('addTransferItem').addEventListener('click', () => {
         itemRows.insertAdjacentHTML('beforeend', rowTemplate.innerHTML.replaceAll('__INDEX__', nextItemIndex++));
         updateBranchSelection();
+    });
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('.transfer-item-search-wrapper')) {
+            itemRows.querySelectorAll('.transfer-item-options').forEach((options) => options.classList.remove('is-open'));
+            itemRows.querySelectorAll('.transfer-item-search').forEach((searchInput) => searchInput.setAttribute('aria-expanded', 'false'));
+        }
     });
     updateBranchSelection();
 </script>
