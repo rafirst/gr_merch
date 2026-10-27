@@ -35,9 +35,10 @@
                                 <td>{{ $transfer->toCabang->nama_cabang }}</td>
                                 <td>
                                     <div class="transfer-lines">
-                                        @foreach($transfer->items as $line)
-                                            <span>{{ $line->sourceItem->nama_items }}</span>
-                                        @endforeach
+                                        <span class="transfer-item-name" title="{{ $transfer->items->first()?->sourceItem?->nama_items ?? '-' }}">{{ $transfer->items->first()?->sourceItem?->nama_items ?? '-' }}</span>
+                                        @if($transfer->items->count() > 1)
+                                            <span class="transfer-more-items" title="{{ $transfer->items->count() - 1 }} item lainnya">+{{ $transfer->items->count() - 1 }}</span>
+                                        @endif
                                     </div>
                                 </td>
                                 <td><span class="transfer-status transfer-status-{{ $transfer->status }}">{{ ucfirst($transfer->status) }}</span></td>
@@ -197,8 +198,9 @@
     .transfer-create-button:focus { filter:brightness(1.12) saturate(1.08); box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 6px 13px rgba(0,0,0,.4); transform:translateY(-1px); }
     .transfer-create-button { flex:0 0 auto; gap:.45rem; padding:0 .8rem; border-color:#f20b18 !important; background:linear-gradient(90deg,#f20b18 0%,#b00813 42%,#5b050b 100%) !important; white-space:nowrap; }
     .transfer-table th { white-space:nowrap; }
-    .transfer-lines { display:grid; gap:.25rem; min-width:170px; }
-    .transfer-lines small { margin-left:.25rem; color:rgba(244,247,250,.62); }
+    .transfer-lines { display:flex; align-items:center; gap:.35rem; min-width:170px; }
+    .transfer-item-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .transfer-more-items { flex:0 0 auto; padding:.15rem .3rem; border-radius:4px; background:#dc1525; color:#fff; font-size:.65rem; font-weight:700; line-height:1.2; }
     .transfer-status { display:inline-block; padding:.3rem .58rem; border:1px solid; border-radius:4px; white-space:nowrap; font-size:.75rem; font-weight:700; }
     .transfer-status-pending { border-color:rgba(255,193,7,.55); background:rgba(255,193,7,.12); color:#ffdf76; }
     .transfer-status-received { border-color:rgba(40,167,69,.55); background:rgba(40,167,69,.12); color:#78e69a; }
