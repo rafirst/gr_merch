@@ -239,17 +239,17 @@ class StockOutDiscountTest extends TestCase
         $this->assertMatchesRegularExpression('/<td>Rp 200\\.000<\/td>\s*<td>2\s*<\/td>\s*<td>Rp 400\\.000<\/td>/', $response->getContent());
     }
 
-    public function test_do_detail_shows_item_sale_price_in_the_harga_jual_column(): void
+    public function test_do_detail_calculates_line_total_summary_and_tax_from_item_sale_price(): void
     {
         [$user, $item] = $this->createSaleContext();
         $stockOut = StockOut::create([
             'item_id' => $item->id,
             'cabang_id' => $item->cabang_id,
-            'jumlah' => 1,
+            'jumlah' => 2,
             'jenis' => 'DO',
             'nomor_spk' => 'SPK-42',
             'harga_jual' => null,
-            'total' => null,
+            'total' => 200000,
             'status' => 'pending',
             'tanggal' => now()->toDateString(),
             'user_id' => $user->id,
@@ -259,7 +259,10 @@ class StockOutDiscountTest extends TestCase
 
         $response->assertOk();
 
-        $this->assertMatchesRegularExpression('/<td>Rp 120\\.000<\/td>\s*<td>1\s*<\/td>/', $response->getContent());
+        $content = $response->getContent();
+        $this->assertMatchesRegularExpression('/<td>Rp 120\\.000<\/td>\s*<td>2\s*<\/td>\s*<td>Rp 240\\.000<\/td>/', $content);
+        $this->assertMatchesRegularExpression('/<td>Rp 240\\.000<\/td>\s*<td>-<\/td>\s*<td class="stockout-detail-grand-total">Rp 266\\.400<\/td>/', $content);
+        $response->assertSee('PPN 11%: <strong>Rp 26.400</strong>', false);
     }
 
     /** @return array{0: User, 1: Item} */

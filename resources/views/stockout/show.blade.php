@@ -4,11 +4,11 @@
 @section('content')
 @php
     $subtotal = $stockOuts->sum(function ($row) {
-        $unitPrice = $row->jenis === 'penjualan'
+        $unitPrice = in_array($row->jenis, ['penjualan', 'DO'], true)
             ? (float) ($row->item->harga_jual ?? 0)
             : ($row->harga_jual !== null
                 ? (float) $row->harga_jual
-                : ($row->jenis === 'DO' ? (float) ($row->item->harga_items ?? 0) : 0));
+                : 0);
 
         return $unitPrice * (int) $row->jumlah;
     });
@@ -190,11 +190,11 @@
                                     : ($row->harga_jual !== null
                                         ? (float) $row->harga_jual
                                         : null);
-                                $lineTotal = $stockOut->jenis === 'penjualan'
+                                $lineTotal = in_array($stockOut->jenis, ['penjualan', 'DO'], true)
                                     ? $unitPrice * (int) $row->jumlah
                                     : ($row->total !== null
                                         ? (float) $row->total
-                                        : ($stockOut->jenis === 'DO' ? (float) ($row->item->harga_items ?? 0) * (int) $row->jumlah : null));
+                                        : null);
                             @endphp
                             <tr>
                                 <td>{{ $row->item->nama_items ?? '-' }}</td>
