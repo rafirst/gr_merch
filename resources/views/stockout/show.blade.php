@@ -185,11 +185,11 @@
                     <tbody>
                         @foreach($stockOuts as $row)
                             @php
-                                $unitPrice = $stockOut->jenis === 'penjualan'
+                                $unitPrice = in_array($stockOut->jenis, ['penjualan', 'DO'], true)
                                     ? (float) ($row->item->harga_jual ?? 0)
                                     : ($row->harga_jual !== null
                                         ? (float) $row->harga_jual
-                                        : ($stockOut->jenis === 'DO' ? (float) ($row->item->harga_items ?? 0) : null));
+                                        : null);
                                 $lineTotal = $stockOut->jenis === 'penjualan'
                                     ? $unitPrice * (int) $row->jumlah
                                     : ($row->total !== null

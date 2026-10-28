@@ -239,6 +239,29 @@ class StockOutDiscountTest extends TestCase
         $this->assertMatchesRegularExpression('/<td>Rp 200\\.000<\/td>\s*<td>2\s*<\/td>\s*<td>Rp 400\\.000<\/td>/', $response->getContent());
     }
 
+    public function test_do_detail_shows_item_sale_price_in_the_harga_jual_column(): void
+    {
+        [$user, $item] = $this->createSaleContext();
+        $stockOut = StockOut::create([
+            'item_id' => $item->id,
+            'cabang_id' => $item->cabang_id,
+            'jumlah' => 1,
+            'jenis' => 'DO',
+            'nomor_spk' => 'SPK-42',
+            'harga_jual' => null,
+            'total' => null,
+            'status' => 'pending',
+            'tanggal' => now()->toDateString(),
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('stockout.show', $stockOut));
+
+        $response->assertOk();
+
+        $this->assertMatchesRegularExpression('/<td>Rp 120\\.000<\/td>\s*<td>1\s*<\/td>/', $response->getContent());
+    }
+
     /** @return array{0: User, 1: Item} */
     private function createSaleContext(): array
     {
