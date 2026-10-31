@@ -26,7 +26,7 @@ class TransferBarangController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if ($user->isAdminHo()) {
+        if ($user->canViewAllData()) {
             $query = TransferBarang::with(['fromCabang', 'toCabang', 'creator', 'items.sourceItem']);
 
             if (in_array($request->input('status'), [
@@ -94,7 +94,7 @@ class TransferBarangController extends Controller
         /** @var User $user */
         $user = Auth::user();
         abort_unless(
-            $user->isAdminHo() || ($user->cabang_id !== null && (int) $transferBarang->to_cabang_id === (int) $user->cabang_id),
+            $user->canViewAllData() || ($user->cabang_id !== null && (int) $transferBarang->to_cabang_id === (int) $user->cabang_id),
             403,
             'Anda tidak memiliki akses ke transfer cabang lain.'
         );

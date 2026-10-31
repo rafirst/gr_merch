@@ -9,7 +9,7 @@
         </a>
     </div>
     <div class="col-lg-4 col-6">
-        <a href="{{ $isAdmin ? route('stockin.index') : route('items.index') }}" class="small-box total-stock-box dashboard-link-box" title="{{ $isAdmin ? 'Buka Data Stock Masuk' : 'Buka Data Items' }}">
+        <a href="{{ $canViewAllData ? route('stockin.index') : route('items.index') }}" class="small-box total-stock-box dashboard-link-box" title="{{ $canViewAllData ? 'Buka Data Stock Masuk' : 'Buka Data Items' }}">
             <div class="inner">
                 <h3>{{ $totalStok }}</h3>
                 <p>Total Stok</p>
@@ -23,8 +23,8 @@
         </div>
     </div> --}}
     <div class="col-lg-4 col-6">
-        <a href="{{ $isAdmin ? route('approval.index') : route('stockout.index') }}" class="small-box dashboard-final-box dashboard-link-box" title="{{ $isAdmin ? 'Buka Approval Items' : 'Buka Barang Keluar' }}">
-            <div class="inner"><h3>{{ $pendingApproval }}</h3><p>{{ $isAdmin ? 'Items Approval' : 'Items Request' }}</p></div>
+        <a href="{{ $isAdminHo ? route('approval.index') : route('stockout.index') }}" class="small-box dashboard-final-box dashboard-link-box" title="{{ $isAdminHo ? 'Buka Approval Items' : 'Buka Barang Keluar' }}">
+            <div class="inner"><h3>{{ $pendingApproval }}</h3><p>{{ $isAdminHo ? 'Items Approval' : 'Items Request' }}</p></div>
         </a>
     </div>
 </div>

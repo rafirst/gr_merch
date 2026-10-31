@@ -920,7 +920,7 @@
                     <span class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                     <span class="user-copy">
                         <span class="user-name">{{ auth()->user()->name }}</span>
-                        <span class="user-role">{{ auth()->user()->role === 'admin_ho' ? 'Admininistrator' : 'Staff Cabang' }}</span>
+                        <span class="user-role">{{ match (auth()->user()->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' } }}</span>
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userMenu">
@@ -929,7 +929,7 @@
                         <small>{{ auth()->user()->email }}</small>
                     </div>
                     <div class="user-popup-body">
-                        <small><i class="fas fa-id-badge mr-1"></i> {{ auth()->user()->role === 'admin_ho' ? 'Admininistrator' : 'Staff Cabang' }}</small>
+                        <small><i class="fas fa-id-badge mr-1"></i> {{ match (auth()->user()->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' } }}</small>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-sm btn-outline-danger">
@@ -967,7 +967,7 @@
                             <i class="nav-icon fas fa-box"></i><p>Data Items</p>
                         </a>
                     </li>
-                    @if(auth()->user()->isAdminHo())
+                    @if(auth()->user()->canViewAllData())
                     <li class="nav-item">
                         <a href="{{ route('stockin.index') }}" class="nav-link {{ request()->routeIs('stockin.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-arrow-down"></i><p>Barang Masuk</p>
@@ -976,7 +976,7 @@
                     @endif
                     <li class="nav-item">
                         <a href="{{ route('transfers.index') }}" class="nav-link {{ request()->routeIs('transfers.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-exchange-alt"></i><p>{{ auth()->user()->isAdminHo() ? 'Transfer Barang' : 'Transfer Masuk' }}</p>
+                            <i class="nav-icon fas fa-exchange-alt"></i><p>{{ auth()->user()->canViewAllData() ? 'Transfer Barang' : 'Transfer Masuk' }}</p>
                         </a>
                     </li>
                     <li class="nav-item">

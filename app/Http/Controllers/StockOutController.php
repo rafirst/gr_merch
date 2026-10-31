@@ -25,7 +25,7 @@ class StockOutController extends Controller
         $user = Auth::user();
         $query = StockOut::with(['item', 'cabang', 'user', 'approver']);
 
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $query->where('cabang_id', $user->cabang_id);
         }
 
@@ -83,7 +83,7 @@ class StockOutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockOut->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
         }
 
@@ -100,7 +100,7 @@ class StockOutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockOut->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
         }
 
@@ -124,7 +124,7 @@ class StockOutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockOut->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
         }
 
@@ -165,7 +165,7 @@ class StockOutController extends Controller
                 return back()->withErrors(['item_id' => 'Item tidak ditemukan.'])->withInput();
             }
 
-            if (! $user->isAdminHo() && $item->cabang_id !== $user->cabang_id) {
+            if (! $user->canViewAllData() && $item->cabang_id !== $user->cabang_id) {
                 abort(403, 'Anda tidak memiliki akses ke item cabang lain.');
             }
         }
@@ -265,7 +265,7 @@ class StockOutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockOut->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
         }
 
@@ -310,7 +310,7 @@ class StockOutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockOut->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
         }
 
@@ -327,7 +327,7 @@ class StockOutController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo() && $stockOut->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockOut->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke transaksi cabang lain.');
         }
 
@@ -416,7 +416,7 @@ class StockOutController extends Controller
         foreach ($data['item_id'] as $index => $itemId) {
             $item = $items->get($itemId);
 
-            if (! $user->isAdminHo() && $item->cabang_id !== $user->cabang_id) {
+            if (! $user->canViewAllData() && $item->cabang_id !== $user->cabang_id) {
                 abort(403, 'Anda tidak memiliki akses ke item cabang lain.');
             }
 

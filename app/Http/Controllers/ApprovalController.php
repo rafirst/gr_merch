@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-// Hanya Admin HO yang bisa akses (dibatasi via route middleware 'role:admin_ho')
+// Hanya Administrator yang bisa akses (dibatasi via route middleware 'role:admin_ho')
 class ApprovalController extends Controller
 {
     public function index()

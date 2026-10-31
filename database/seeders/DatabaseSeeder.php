@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         User::updateOrCreate(
             ['username' => 'administrator'],
             [
-                'name' => 'Admin HO',
+                'name' => 'Administrator',
                 'password' => Hash::make('password'),
                 'role' => 'admin_ho',
                 'cabang_id' => $pusat->id,

@@ -221,7 +221,7 @@
     'modalId' => 'historyExportModal',
     'label' => 'Histori Transaksi',
     'pdfUrl' => route('history.export', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])),
-    'excelUrl' => auth()->user()?->isAdminHo() ? route('history.export.excel', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) : null,
+    'excelUrl' => auth()->user()?->canViewAllData() ? route('history.export.excel', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) : null,
 ])
 
 @push('styles')

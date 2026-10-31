@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', auth()->user()->isAdminHo() ? 'Transfer Barang' : 'Transfer Masuk')
+@section('title', auth()->user()->canViewAllData() ? 'Transfer Barang' : 'Transfer Masuk')
 
 @section('content')
-@if(auth()->user()->isAdminHo())
+@if(auth()->user()->canViewAllData())
     <div class="card transfer-card">
         <div class="card-header transfer-toolbar">
             <form method="GET" class="transfer-filters">
@@ -19,7 +19,9 @@
                 <button class="btn transfer-filter-button" type="submit" aria-label="Cari transfer" title="Cari transfer"><i class="fas fa-search"></i></button>
                 <a class="btn transfer-reset-button" href="{{ route('transfers.index') }}" aria-label="Reset filter" title="Reset filter"><i class="fas fa-undo-alt"></i></a>
             </form>
-            <a href="{{ route('transfers.create') }}" class="btn transfer-create-button" title="Buat Transfer"><i class="fas fa-plus"></i><span>Transfer</span></a>
+            @if(auth()->user()->isAdminHo())
+                <a href="{{ route('transfers.create') }}" class="btn transfer-create-button" title="Buat Transfer"><i class="fas fa-plus"></i><span>Transfer</span></a>
+            @endif
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -45,15 +47,17 @@
                                 <td class="text-center">
                                     <div class="transfer-actions">
                                         <a href="{{ route('transfers.show', $transfer) }}" class="btn transfer-action-button transfer-view-button" title="Lihat detail" aria-label="Lihat detail transfer"><i class="fas fa-eye"></i></a>
-                                        @if($transfer->status === 'proses')
-                                            <a href="{{ route('transfers.edit', $transfer) }}" class="btn transfer-action-button transfer-edit-button" title="Edit transfer" aria-label="Edit transfer"><i class="fas fa-pen"></i></a>
-                                        @endif
-                                        @if($transfer->status !== 'batal')
-                                            <form action="{{ route('transfers.destroy', $transfer) }}" method="POST" class="d-inline" onsubmit="return confirm('Batalkan transfer ini? Stok akan disesuaikan dan status menjadi batal.');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn transfer-action-button transfer-delete-button" title="Batalkan transfer" aria-label="Batalkan transfer"><i class="fas fa-trash"></i></button>
-                                            </form>
+                                        @if(auth()->user()->isAdminHo())
+                                            @if($transfer->status === 'proses')
+                                                <a href="{{ route('transfers.edit', $transfer) }}" class="btn transfer-action-button transfer-edit-button" title="Edit transfer" aria-label="Edit transfer"><i class="fas fa-pen"></i></a>
+                                            @endif
+                                            @if($transfer->status !== 'batal')
+                                                <form action="{{ route('transfers.destroy', $transfer) }}" method="POST" class="d-inline" onsubmit="return confirm('Batalkan transfer ini? Stok akan disesuaikan dan status menjadi batal.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn transfer-action-button transfer-delete-button" title="Batalkan transfer" aria-label="Batalkan transfer"><i class="fas fa-trash"></i></button>
+                                                </form>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -281,7 +285,7 @@
 @endpush
 
 @push('scripts')
-@if(!auth()->user()->isAdminHo())
+@if(auth()->user()->isStaffCabang())
     <script>
         document.querySelectorAll('[data-receive-form]').forEach((form) => {
             const quantities = form.querySelectorAll('[data-received-quantity]');

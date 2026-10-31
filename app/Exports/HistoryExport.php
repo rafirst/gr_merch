@@ -70,7 +70,7 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
 
         /** @var User $user */
         $user = Auth::user();
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $stockInApprovals->whereHas('oldItem', fn (Builder $query) => $query->where('cabang_id', $user->cabang_id));
         }
 
@@ -93,7 +93,7 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
         /** @var User $user */
         $user = Auth::user();
 
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $query->where('cabang_id', $user->cabang_id);
         }
     }

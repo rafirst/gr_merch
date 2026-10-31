@@ -6,7 +6,7 @@
     <div class="card-header items-toolbar">
         <form class="form-inline items-filter-form pt-2" method="GET">
             <input type="text" name="search" class="form-control mr-2" placeholder="Cari nama/kode item" value="{{ request('search') }}">
-            @if(auth()->user()->isAdminHo())
+            @if(auth()->user()->canViewAllData())
                 <select name="cabang_id" class="form-control mr-2">
                     <option value="">Semua Cabang</option>
                     @foreach($cabangs as $c)
@@ -20,29 +20,31 @@
             <a href="{{ route('items.index') }}" class="btn btn-secondary items-glossy" title="Reset filter" aria-label="Reset filter">
                 <i class="fas fa-undo-alt"></i>
             </a>
-            @if(auth()->user()->isAdminHo())
+            @if(auth()->user()->canViewAllData())
                 <button type="button" class="btn btn-success items-glossy" id="itemsExportButton" title="Export item" aria-label="Pilih format ekspor" aria-haspopup="dialog" aria-controls="itemsExportModal">
                     <i class="fas fa-file-pdf"></i>
                 </button>
+            @else
+                <a href="{{ route('items.export') }}" class="btn btn-success items-glossy" title="Export item" aria-label="Export item">
+                    <i class="fas fa-file-pdf"></i>
+                </a>
+            @endif
+            @if(auth()->user()->isAdminHo())
                 <a href="{{ route('items.import.form') }}" class="btn btn-info items-glossy" title="Import item" aria-label="Import item">
                     <i class="fas fa-file-import"></i>
                 </a>
                 <a href="{{ route('items.create') }}" class="btn btn-primary items-glossy" title="Tambah item" aria-label="Tambah item">
                     <i class="fas fa-plus"></i>
                 </a>
-            @else
-                <a href="{{ route('items.export') }}" class="btn btn-success items-glossy" title="Export item" aria-label="Export item">
-                    <i class="fas fa-file-pdf"></i>
-                </a>
             @endif
         </div>
     </div>
     <div class="card-body p-0">
-        <table class="table table-striped mb-0 items-table {{ auth()->user()->isAdminHo() ? 'items-table-admin' : 'items-table-branch' }}">
+        <table class="table table-striped mb-0 items-table {{ auth()->user()->canViewAllData() ? 'items-table-admin' : 'items-table-branch' }}">
             <thead>
                 <tr>
                     <th>Kode</th><th>Nama Item</th><th>Kategori</th><th>Stok</th>
-                    @if(auth()->user()->isAdminHo())
+                    @if(auth()->user()->canViewAllData())
                         <th>Cabang</th>
                     @endif
                     <th>Aksi</th>
@@ -55,7 +57,7 @@
                         <td>{{ $item->nama_items }}</td>
                         <td>{{ $item->kategori ?? '-' }}</td>
                         <td>{{ number_format((int) $item->stok_items, 0, ',', '.') }}</td>
-                        @if(auth()->user()->isAdminHo())
+                        @if(auth()->user()->canViewAllData())
                             <td>{{ $item->cabang->nama_cabang ?? '-' }}</td>
                         @endif
                         <td class="items-actions-cell">
@@ -72,7 +74,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="{{ auth()->user()->isAdminHo() ? 7 : 6 }}" class="text-center text-muted">Belum ada data item.</td></tr>
+                    <tr><td colspan="{{ auth()->user()->canViewAllData() ? 7 : 6 }}" class="text-center text-muted">Belum ada data item.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -112,7 +114,7 @@
 </div>
 @endsection
 
-@if(auth()->user()->isAdminHo())
+@if(auth()->user()->canViewAllData())
     @include('components.export-format-modal', [
         'modalId' => 'itemsExportModal',
         'label' => 'Data Items',

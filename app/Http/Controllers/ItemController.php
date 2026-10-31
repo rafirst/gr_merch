@@ -18,7 +18,7 @@ class ItemController extends Controller
         $user = Auth::user();
         $query = Item::with('cabang');
 
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $query->where('cabang_id', $user->cabang_id);
         } elseif ($request->filled('cabang_id')) {
             $query->where('cabang_id', $request->cabang_id);
@@ -58,7 +58,7 @@ class ItemController extends Controller
         $stockByCabang = Item::with('cabang')
             ->where('kode_items', $item->kode_items)
             ->where('nama_items', $item->nama_items)
-            ->when(! $user->isAdminHo(), fn ($query) => $query->where('cabang_id', $user->cabang_id))
+            ->when(! $user->canViewAllData(), fn ($query) => $query->where('cabang_id', $user->cabang_id))
             ->orderBy('cabang_id')
             ->get();
         $totalStock = (int) $stockByCabang->sum('stok_items');
@@ -159,7 +159,7 @@ class ItemController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (! $user->isAdminHo() && $item->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $item->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke item cabang lain.');
         }
     }

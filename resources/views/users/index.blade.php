@@ -17,7 +17,9 @@
                     <tr>
                         <td>{{ $u->name }}</td>
                         <td>{{ $u->username }}</td>
-                        <td><span class="badge users-role-badge users-glossy badge-{{ $u->role == 'admin_ho' ? 'primary' : 'secondary' }}">{{ $u->role == 'admin_ho' ? 'Admininistrator' : 'Staff Cabang' }}</span></td>
+                        @php($roleLabel = match ($u->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' })
+                        @php($roleBadge = match ($u->role) { 'admin_ho' => 'primary', 'admin' => 'info', default => 'secondary' })
+                        <td><span class="badge users-role-badge users-glossy badge-{{ $roleBadge }}">{{ $roleLabel }}</span></td>
                         <td>{{ $u->cabang->nama_cabang ?? '-' }}</td>
                         <td>
                             <a href="{{ route('users.show', $u) }}" class="btn btn-sm btn-info users-glossy" title="Lihat detail user" aria-label="Lihat detail user">
@@ -126,7 +128,10 @@
     .users-role-badge.badge-secondary {
         background: linear-gradient(145deg, #aeb9c4 0%, #687887 48%, #465563 100%);
     }
+
+    .users-role-badge.badge-info {
+        background: linear-gradient(145deg, #5fdff2 0%, #0fa5bd 48%, #08788f 100%);
+    }
 </style>
 @endpush
-
 

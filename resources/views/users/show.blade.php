@@ -20,7 +20,7 @@
             <tbody>
                 <tr><td>Nama</td><td>{{ $user->name }}</td></tr>
                 <tr><td>Username</td><td>{{ $user->username }}</td></tr>
-                <tr><td>Role</td><td>{{ $user->role === 'admin_ho' ? 'Admin HO' : 'Staff Cabang' }}</td></tr>
+                <tr><td>Role</td><td>{{ match ($user->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' } }}</td></tr>
                 <tr><td>Cabang</td><td>{{ $user->cabang->nama_cabang ?? '-' }}</td></tr>
                 <tr><td>Dibuat</td><td>{{ $user->created_at?->format('d-m-Y H:i') ?? '-' }}</td></tr>
                 <tr><td>Diperbarui</td><td>{{ $user->updated_at?->format('d-m-Y H:i') ?? '-' }}</td></tr>

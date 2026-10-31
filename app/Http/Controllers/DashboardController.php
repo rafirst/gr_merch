@@ -16,13 +16,14 @@ class DashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $isAdmin = $user->isAdminHo();
+        $canViewAllData = $user->canViewAllData();
+        $isAdminHo = $user->isAdminHo();
 
         $itemQuery = Item::query();
         $stockInQuery = StockIn::query();
         $stockOutQuery = StockOut::query();
 
-        if (! $isAdmin) {
+        if (! $canViewAllData) {
             $itemQuery->where('cabang_id', $user->cabang_id);
             $stockInQuery->where('cabang_id', $user->cabang_id);
             $stockOutQuery->where('cabang_id', $user->cabang_id);
@@ -99,7 +100,7 @@ class DashboardController extends Controller
 
         return view('dashboard.index', compact(
             'totalItems', 'totalStok', 'pendingApproval',
-            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'isAdmin', 'stockItems', 'search'
+            'bulanLabel', 'dataIn', 'dataOut', 'topItems', 'canViewAllData', 'isAdminHo', 'stockItems', 'search'
         ));
     }
 

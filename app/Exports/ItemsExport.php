@@ -18,7 +18,7 @@ class ItemsExport implements FromCollection, WithHeadings, WithMapping
         $user = Auth::user();
         $query = Item::with('cabang');
 
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $query->where('cabang_id', $user->cabang_id);
         }
 

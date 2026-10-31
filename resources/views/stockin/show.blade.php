@@ -6,9 +6,11 @@
     <div class="card-header stockin-detail-header">
         <h3 class="card-title mb-0">Detail Barang Masuk</h3>
         <div class="stockin-detail-actions">
-            <a href="{{ route('stockin.edit', $stockIn) }}" class="btn btn-warning btn-sm">
-                <i class="fas fa-pen mr-1"></i> Edit
-            </a>
+            @if(auth()->user()->isAdminHo())
+                <a href="{{ route('stockin.edit', $stockIn) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-pen mr-1"></i> Edit
+                </a>
+            @endif
             <a href="{{ route('stockin.index') }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left mr-1"></i> Kembali
             </a>

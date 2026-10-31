@@ -273,7 +273,7 @@ class StockOutDiscountTest extends TestCase
             'nama_cabang' => 'Cabang C01',
         ]);
         $user = User::create([
-            'name' => 'Admin HO',
+            'name' => 'Administrator',
             'username' => 'admin-'.uniqid(),
             'password' => 'password',
             'role' => 'admin_ho',

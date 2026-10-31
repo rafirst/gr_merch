@@ -18,7 +18,7 @@ class StockInExport implements FromCollection, WithHeadings, WithMapping
         $user = Auth::user();
         $query = StockIn::with(['item', 'cabang', 'user']);
 
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $query->where('cabang_id', $user->cabang_id);
         }
 

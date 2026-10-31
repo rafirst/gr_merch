@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-// Hanya Admin HO (dibatasi via route middleware 'role:admin_ho')
+// Hanya Administrator (dibatasi via route middleware 'role:admin_ho')
 class UserController extends Controller
 {
     public function index()
@@ -37,11 +37,12 @@ class UserController extends Controller
             'name' => 'required|string|max:150',
             'username' => 'required|string|max:150|unique:users,username',
             'password' => 'required|min:6|confirmed',
-            'role' => 'required|in:admin_ho,staff_cabang',
-            'cabang_id' => 'required|exists:cabangs,id',
+            'role' => 'required|in:admin_ho,admin,staff_cabang',
+            'cabang_id' => 'required_if:role,staff_cabang|nullable|exists:cabangs,id',
         ]);
 
         $data['password'] = Hash::make($data['password']);
+        $data['cabang_id'] = $data['role'] === 'staff_cabang' ? $data['cabang_id'] : null;
         User::create($data);
 
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
@@ -60,9 +61,11 @@ class UserController extends Controller
             'name' => 'required|string|max:150',
             'username' => 'required|string|max:150|unique:users,username,'.$user->id,
             'password' => 'nullable|min:6|confirmed',
-            'role' => 'required|in:admin_ho,staff_cabang',
-            'cabang_id' => 'required|exists:cabangs,id',
+            'role' => 'required|in:admin_ho,admin,staff_cabang',
+            'cabang_id' => 'required_if:role,staff_cabang|nullable|exists:cabangs,id',
         ]);
+
+        $data['cabang_id'] = $data['role'] === 'staff_cabang' ? $data['cabang_id'] : null;
 
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);

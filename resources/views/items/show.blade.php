@@ -29,7 +29,7 @@
                     <div class="item-detail-row"><span>Harga Beli</span><strong>Rp {{ number_format($item->harga_items, 0, ',', '.') }}</strong></div>
                     <div class="item-detail-row"><span>Harga Jual</span><strong>Rp {{ number_format($item->harga_jual, 0, ',', '.') }}</strong></div>
                     <div class="item-detail-row"><span>Total Stok</span><strong>{{ $totalStock }}</strong></div>
-                    <div class="item-detail-row"><span>Cakupan</span><strong>{{ auth()->user()->isAdminHo() ? 'Semua cabang' : ($item->cabang->nama_cabang ?? '-') }}</strong></div>
+                    <div class="item-detail-row"><span>Cakupan</span><strong>{{ auth()->user()->canViewAllData() ? 'Semua cabang' : ($item->cabang->nama_cabang ?? '-') }}</strong></div>
                     <div class="item-detail-row"><span>Dibuat</span><strong>{{ $item->created_at?->format('d-m-Y H:i') ?? '-' }}</strong></div>
                     <div class="item-detail-row"><span>Diperbarui</span><strong>{{ $item->updated_at?->format('d-m-Y H:i') ?? '-' }}</strong></div>
                 </div>

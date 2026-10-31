@@ -32,6 +32,16 @@ class User extends Authenticatable
         return $this->role === 'admin_ho';
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function canViewAllData(): bool
+    {
+        return $this->isAdminHo() || $this->isAdmin();
+    }
+
     public function isStaffCabang(): bool
     {
         return $this->role === 'staff_cabang';

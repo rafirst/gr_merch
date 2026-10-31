@@ -6,7 +6,7 @@
     <div class="card-header stockin-card-header">
         <form class="stockin-filter-form" method="GET">
             <input type="text" name="search" class="form-control" placeholder="Cari nama/kode item" value="{{ request('search') }}">
-            @if(auth()->user()->isAdminHo())
+            @if(auth()->user()->canViewAllData())
                 <select name="cabang_id" class="form-control">
                     <option value="">Semua Cabang</option>
                     @foreach($cabangs as $cabang)
@@ -19,8 +19,10 @@
         </form>
         <div class="stockin-header-actions">
               <button type="button" class="btn btn-success stockin-toolbar-button stockin-export-button" id="stockinExportButton" title="Export barang masuk" aria-label="Pilih format ekspor" aria-haspopup="dialog" aria-controls="stockinExportModal"><i class="fas fa-file-pdf"></i></button>
+              @if(auth()->user()->isAdminHo())
               <a href="{{ route('stockin.import.form') }}" class="btn btn-info stockin-toolbar-button stockin-import-button" title="Import barang masuk" aria-label="Import barang masuk"><i class="fas fa-file-import"></i></a>
               <a href="{{ route('stockin.create') }}" class="btn btn-primary stockin-toolbar-button stockin-create-button" title="Tambah barang masuk" aria-label="Tambah barang masuk"><i class="fas fa-plus"></i></a>
+              @endif
         </div>
     </div>
     <div class="card-body p-0">
@@ -38,16 +40,18 @@
                             <a href="{{ route('stockin.show', $item->latestStockIn) }}" class="btn btn-sm stockin-action-button stockin-view-button" title="Lihat item" aria-label="Lihat detail item">
                                 <i class="fas fa-eye"></i>
                             </a>
-                            <a href="{{ route('stockin.edit', $item->latestStockIn) }}" class="btn btn-sm stockin-action-button stockin-edit-button" title="Edit barang masuk" aria-label="Edit barang masuk">
-                                <i class="fas fa-pen"></i>
-                            </a>
-                            <form action="{{ route('stockin.destroy', $item->latestStockIn) }}" method="POST" class="d-inline stockin-delete-form" data-item="{{ $item->nama_items }}">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm stockin-action-button stockin-delete-button" title="Hapus barang masuk" aria-label="Hapus barang masuk">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+                            @if(auth()->user()->isAdminHo())
+                                <a href="{{ route('stockin.edit', $item->latestStockIn) }}" class="btn btn-sm stockin-action-button stockin-edit-button" title="Edit barang masuk" aria-label="Edit barang masuk">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                                <form action="{{ route('stockin.destroy', $item->latestStockIn) }}" method="POST" class="d-inline stockin-delete-form" data-item="{{ $item->nama_items }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm stockin-action-button stockin-delete-button" title="Hapus barang masuk" aria-label="Hapus barang masuk">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -95,7 +99,7 @@
     'modalId' => 'stockinExportModal',
     'label' => 'Barang Masuk',
     'pdfUrl' => route('stockin.export'),
-    'excelUrl' => route('stockin.export.excel'),
+    'excelUrl' => auth()->user()->canViewAllData() ? route('stockin.export.excel') : null,
 ])
 
 <div class="stockin-confirm-modal" id="stockinConfirmModal" aria-hidden="true">

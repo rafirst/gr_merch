@@ -43,7 +43,7 @@ class HistoryController extends Controller
 
             if ($cabangId !== null) {
                 $this->authorizeCabang($user, (int) $cabangId);
-            } elseif (! $user->isAdminHo()) {
+            } elseif (! $user->canViewAllData()) {
                 abort(403, 'Anda tidak memiliki akses ke histori cabang lain.');
             }
 
@@ -60,15 +60,15 @@ class HistoryController extends Controller
 
         $inQuery = StockIn::with(['item', 'cabang', 'user'])
             ->selectRaw("id, item_id, cabang_id, jumlah, tanggal, user_id, 'in' as tipe, null as jenis, null as status")
-            ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id));
+            ->when(! $user->canViewAllData(), fn ($q) => $q->where('cabang_id', $user->cabang_id));
 
         $outQuery = StockOut::with(['item', 'cabang', 'user'])
             ->selectRaw('id, item_id, cabang_id, jumlah, tanggal, user_id, "out" as tipe, jenis, status')
-            ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id));
+            ->when(! $user->canViewAllData(), fn ($q) => $q->where('cabang_id', $user->cabang_id));
 
         if ($request->filled('tipe') && $request->tipe === 'in') {
             $riwayat = StockIn::with(['item', 'cabang', 'user'])
-                ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
+                ->when(! $user->canViewAllData(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
                 ->when($request->filled('item'), fn ($q) => $q->whereHas('item', fn ($qq) => $qq->where('nama_items', 'like', '%'.$request->item.'%')))
                 ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal', '>=', $request->dari))
                 ->when($request->filled('sampai'), fn ($q) => $q->whereDate('tanggal', '<=', $request->sampai))
@@ -79,7 +79,7 @@ class HistoryController extends Controller
 
         if ($request->filled('tipe') && $request->tipe === 'out') {
             $riwayat = StockOut::with('item')
-                ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
+                ->when(! $user->canViewAllData(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
                 ->when($request->filled('item'), fn ($q) => $q->whereHas('item', fn ($qq) => $qq->where('nama_items', 'like', '%'.$request->item.'%')))
                 ->when($request->filled('jenis'), fn ($q) => $q->where('jenis', $request->jenis))
                 ->when($request->filled('dari'), fn ($q) => $q->whereDate('tanggal', '>=', $request->dari))
@@ -93,7 +93,7 @@ class HistoryController extends Controller
             $stockOutApprovals = StockOut::with(['item', 'cabang', 'user', 'approver'])
                 ->whereIn('status', ['approved', 'rejected'])
                 ->whereNotNull('approved_by')
-                ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
+                ->when(! $user->canViewAllData(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
                 ->when($request->filled('item'), fn ($q) => $q->whereHas('item', fn ($qq) => $qq->where('nama_items', 'like', '%'.$request->item.'%')))
                 ->when($request->filled('dari'), fn ($q) => $q->whereDate('approved_at', '>=', $request->dari))
                 ->when($request->filled('sampai'), fn ($q) => $q->whereDate('approved_at', '<=', $request->sampai))
@@ -113,7 +113,7 @@ class HistoryController extends Controller
                 ]);
             $stockInApprovals = StockInEditRequest::with(['oldItem.cabang', 'newItem', 'requester', 'approver'])
                 ->whereIn('status', ['approved', 'rejected'])
-                ->when(! $user->isAdminHo(), fn ($q) => $q->whereHas('oldItem', fn ($qq) => $qq->where('cabang_id', $user->cabang_id)))
+                ->when(! $user->canViewAllData(), fn ($q) => $q->whereHas('oldItem', fn ($qq) => $qq->where('cabang_id', $user->cabang_id)))
                 ->when($request->filled('item'), fn ($q) => $q->whereHas('oldItem', fn ($qq) => $qq->where('nama_items', 'like', '%'.$request->item.'%')))
                 ->when($request->filled('dari'), fn ($q) => $q->whereDate('approved_at', '>=', $request->dari))
                 ->when($request->filled('sampai'), fn ($q) => $q->whereDate('approved_at', '<=', $request->sampai))
@@ -142,7 +142,7 @@ class HistoryController extends Controller
         // Default: tampilkan gabungan ringkas (barang masuk & keluar terbaru)
         $stockIns = (clone $inQuery)->latest('tanggal')->take(10)->get();
         $stockOuts = StockOut::with(['item', 'cabang', 'user'])
-            ->when(! $user->isAdminHo(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
+            ->when(! $user->canViewAllData(), fn ($q) => $q->where('cabang_id', $user->cabang_id))
             ->latest('tanggal')->take(10)->get();
 
         return view('history.index', ['stockIns' => $stockIns, 'stockOuts' => $stockOuts, 'tipe' => null]);
@@ -150,7 +150,7 @@ class HistoryController extends Controller
 
     private function authorizeCabang(User $user, int $cabangId): void
     {
-        if (! $user->isAdminHo() && $user->cabang_id !== $cabangId) {
+        if (! $user->canViewAllData() && $user->cabang_id !== $cabangId) {
             abort(403, 'Anda tidak memiliki akses ke histori cabang lain.');
         }
     }

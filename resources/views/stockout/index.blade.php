@@ -21,7 +21,9 @@
             <button type="submit" class="btn stockout-filter-button" title="Cari transaksi" aria-label="Cari transaksi"><i class="fas fa-search"></i></button>
             <a href="{{ route('stockout.index') }}" class="btn stockout-reset-button" title="Reset filter" aria-label="Reset filter"><i class="fas fa-undo-alt"></i></a>
         </form>
-        <a href="{{ route('stockout.create') }}" class="btn stockout-create-button"><i class="fas fa-plus"></i> Items</a>
+        @if(!auth()->user()->isAdmin())
+            <a href="{{ route('stockout.create') }}" class="btn stockout-create-button"><i class="fas fa-plus"></i> Items</a>
+        @endif
     </div>
     <div class="card-body p-0">
         <table class="table table-striped mb-0 stockout-table">
@@ -62,18 +64,20 @@
                                 <a href="{{ route('stockout.show', $row) }}" class="btn btn-sm stockout-action-button" title="Lihat detail" aria-label="Lihat detail transaksi">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                @if($row->status !== 'rejected')
-                                    <a href="{{ route('stockout.edit', $row) }}" class="btn btn-sm stockout-edit-button" title="Edit transaksi" aria-label="Edit transaksi">
-                                        <i class="fas fa-pen"></i>
-                                    </a>
-                                @endif
-                                @if($row->status === 'approved' && $row->jenis === 'penjualan')
-                                    <button type="button" class="btn btn-sm stockout-payment-button{{ $row->bukti_pembayaran ? ' is-complete' : '' }}"
-                                        title="Bukti pembayaran"
-                                        aria-label="Input bukti pembayaran"
-                                        data-toggle="modal" data-target="#paymentModal-{{ $row->id }}">
-                                        <i class="fas fa-money-bill-wave"></i>
-                                    </button>
+                                @if(!auth()->user()->isAdmin())
+                                    @if($row->status !== 'rejected')
+                                        <a href="{{ route('stockout.edit', $row) }}" class="btn btn-sm stockout-edit-button" title="Edit transaksi" aria-label="Edit transaksi">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                    @endif
+                                    @if($row->status === 'approved' && $row->jenis === 'penjualan')
+                                        <button type="button" class="btn btn-sm stockout-payment-button{{ $row->bukti_pembayaran ? ' is-complete' : '' }}"
+                                            title="Bukti pembayaran"
+                                            aria-label="Input bukti pembayaran"
+                                            data-toggle="modal" data-target="#paymentModal-{{ $row->id }}">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </button>
+                                    @endif
                                 @endif
                             </div>
                         </td>
@@ -118,6 +122,7 @@
     </div>
 </div>
 
+@if(!auth()->user()->isAdmin())
 @foreach($stockOuts as $row)
     @if($row->status === 'approved' && $row->jenis === 'penjualan')
         <div class="modal fade stockout-payment-modal" id="paymentModal-{{ $row->id }}" tabindex="-1" role="dialog" aria-labelledby="paymentModalLabel-{{ $row->id }}" aria-hidden="true" data-backdrop="true">
@@ -223,6 +228,7 @@
         </div>
     @endif
 @endforeach
+@endif
 
 <style>
     .stockout-table {

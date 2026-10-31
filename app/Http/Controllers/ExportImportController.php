@@ -93,7 +93,7 @@ class ExportImportController extends Controller
     {
         /** @var User|null $user */
         $user = Auth::user();
-        abort_unless($user?->isAdminHo(), 403, 'Hanya administrator yang dapat mengekspor Excel.');
+        abort_unless($user?->canViewAllData(), 403, 'Hanya administrator yang dapat mengekspor Excel.');
 
         return Excel::download(
             new HistoryExport($this->historyFilters($request)),

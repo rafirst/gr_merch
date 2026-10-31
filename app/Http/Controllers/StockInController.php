@@ -21,7 +21,7 @@ class StockInController extends Controller
         $query = Item::with(['cabang', 'latestStockIn'])
             ->whereHas('stockIns');
 
-        if (! $user->isAdminHo()) {
+        if (! $user->canViewAllData()) {
             $query->where('cabang_id', $user->cabang_id);
         } elseif ($request->filled('cabang_id')) {
             $query->where('cabang_id', $request->cabang_id);
@@ -230,7 +230,7 @@ class StockInController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        if (! $user->isAdminHo() && $stockIn->cabang_id !== $user->cabang_id) {
+        if (! $user->canViewAllData() && $stockIn->cabang_id !== $user->cabang_id) {
             abort(403, 'Anda tidak memiliki akses ke barang masuk cabang lain.');
         }
     }

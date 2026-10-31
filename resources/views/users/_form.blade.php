@@ -23,12 +23,14 @@
         <label>Role</label>
         <select name="role" class="form-control" required>
             <option value="staff_cabang" {{ old('role', $user->role ?? '') == 'staff_cabang' ? 'selected' : '' }}>Staff Cabang</option>
-            <option value="admin_ho" {{ old('role', $user->role ?? '') == 'admin_ho' ? 'selected' : '' }}>Admin HO</option>
+            <option value="admin" {{ old('role', $user->role ?? '') == 'admin' ? 'selected' : '' }}>Admin</option>
+            <option value="admin_ho" {{ old('role', $user->role ?? '') == 'admin_ho' ? 'selected' : '' }}>Administrator</option>
         </select>
     </div>
     <div class="form-group col-md-6">
-        <label>Cabang</label>
-        <select name="cabang_id" class="form-control" required>
+        <label>Cabang <small>(wajib untuk Staff Cabang)</small></label>
+        <select name="cabang_id" class="form-control">
+            <option value="">Tidak terikat cabang</option>
             @foreach($cabangs as $c)
                 <option value="{{ $c->id }}" {{ old('cabang_id', $user->cabang_id ?? '') == $c->id ? 'selected' : '' }}>{{ $c->nama_cabang }}</option>
             @endforeach
