@@ -208,6 +208,37 @@ class AdminRoleReadOnlyTest extends TestCase
         ]);
     }
 
+    public function test_admin_role_keeps_the_selected_branch_when_created_and_updated(): void
+    {
+        $administrator = $this->createUser('admin_ho', null);
+        $firstBranch = $this->createCabang('ADM');
+        $secondBranch = $this->createCabang('ALT');
+
+        $this->withoutMiddleware(VerifyCsrfToken::class)
+            ->actingAs($administrator)->post(route('users.store'), [
+                'name' => 'Branch Admin',
+                'username' => 'branch-admin',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+                'role' => 'admin',
+                'cabang_id' => $firstBranch->id,
+            ])->assertRedirect(route('users.index'))
+            ->assertSessionHasNoErrors();
+
+        $admin = User::where('username', 'branch-admin')->firstOrFail();
+        $this->assertSame($firstBranch->id, $admin->cabang_id);
+
+        $this->put(route('users.update', $admin), [
+            'name' => $admin->name,
+            'username' => $admin->username,
+            'role' => 'admin',
+            'cabang_id' => $secondBranch->id,
+        ])->assertRedirect(route('users.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($secondBranch->id, $admin->fresh()->cabang_id);
+    }
+
     private function createUser(string $role, ?int $branchId): User
     {
         return User::create([

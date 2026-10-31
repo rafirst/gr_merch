@@ -42,7 +42,7 @@ class UserController extends Controller
         ]);
 
         $data['password'] = Hash::make($data['password']);
-        $data['cabang_id'] = $data['role'] === 'staff_cabang' ? $data['cabang_id'] : null;
+        $data['cabang_id'] = $data['role'] === 'admin_ho' ? null : ($data['cabang_id'] ?? null);
         User::create($data);
 
         return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan.');
@@ -65,7 +65,7 @@ class UserController extends Controller
             'cabang_id' => 'required_if:role,staff_cabang|nullable|exists:cabangs,id',
         ]);
 
-        $data['cabang_id'] = $data['role'] === 'staff_cabang' ? $data['cabang_id'] : null;
+        $data['cabang_id'] = $data['role'] === 'admin_ho' ? null : ($data['cabang_id'] ?? null);
 
         if (! empty($data['password'])) {
             $data['password'] = Hash::make($data['password']);
