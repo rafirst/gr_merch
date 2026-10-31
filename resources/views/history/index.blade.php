@@ -217,35 +217,12 @@
 </div>
 @endsection
 
-<div class="history-export-modal" id="historyExportModal" aria-hidden="true">
-    <div class="history-export-backdrop" data-history-export-close></div>
-    <section class="history-export-dialog" role="dialog" aria-modal="true" aria-labelledby="historyExportTitle">
-        <div class="history-export-dialog-header">
-            <div>
-                <span class="history-export-kicker">Histori Transaksi</span>
-                <h3 id="historyExportTitle">Pilih Format Ekspor</h3>
-            </div>
-            <button type="button" class="history-export-close" data-history-export-close aria-label="Tutup pilihan ekspor">
-                <i class="fas fa-times" aria-hidden="true"></i>
-            </button>
-        </div>
-        <div class="history-export-options">
-            <a href="{{ route('history.export', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) }}" class="history-export-option history-export-option-pdf">
-                <span class="history-export-option-icon"><i class="fas fa-file-pdf" aria-hidden="true"></i></span>
-                <span class="history-export-option-copy"><strong>Export PDF</strong><small>Unduh laporan dalam format PDF</small></span>
-                <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
-            </a>
-            @if(auth()->user()?->isAdminHo())
-            <a href="{{ route('history.export.excel', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) }}" class="history-export-option history-export-option-excel">
-                <span class="history-export-option-icon"><i class="fas fa-file-excel" aria-hidden="true"></i></span>
-                <span class="history-export-option-copy"><strong>Export Excel</strong><small>Unduh data dalam format XLSX</small></span>
-                <i class="fas fa-chevron-right history-export-option-arrow" aria-hidden="true"></i>
-            </a>
-            @endif
-        </div>
-        <button type="button" class="history-export-cancel" data-history-export-close>Batal</button>
-    </section>
-</div>
+@include('components.export-format-modal', [
+    'modalId' => 'historyExportModal',
+    'label' => 'Histori Transaksi',
+    'pdfUrl' => route('history.export', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])),
+    'excelUrl' => auth()->user()?->isAdminHo() ? route('history.export.excel', request()->only(['tipe', 'jenis', 'item', 'dari', 'sampai'])) : null,
+])
 
 @push('styles')
 <style>
@@ -382,160 +359,6 @@
         flex: 0 0 auto;
         margin-left: auto;
         background: linear-gradient(145deg, #ff3b4b 0%, #df071a 48%, #8e000c 100%) !important;
-    }
-
-    .history-export-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 2000;
-        display: grid;
-        visibility: hidden;
-        place-items: center;
-        opacity: 0;
-        transition: opacity 0.2s ease, visibility 0.2s ease;
-    }
-
-    .history-export-modal.is-visible {
-        visibility: visible;
-        opacity: 1;
-    }
-
-    .history-export-backdrop {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 4, 9, 0.78);
-        backdrop-filter: blur(4px);
-    }
-
-    .history-export-dialog {
-        position: relative;
-        width: min(430px, calc(100% - 2rem));
-        padding: 1.25rem;
-        border: 1px solid rgba(105, 143, 176, 0.4);
-        border-top: 3px solid #df071a;
-        border-radius: 6px;
-        background: linear-gradient(145deg, #172532, #050c14 72%);
-        box-shadow: 0 20px 55px rgba(0, 0, 0, 0.6);
-        transform: translateY(12px);
-        transition: transform 0.2s ease;
-    }
-
-    .history-export-modal.is-visible .history-export-dialog {
-        transform: translateY(0);
-    }
-
-    .history-export-dialog-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .history-export-kicker {
-        color: #ff6570;
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-    }
-
-    .history-export-dialog h3 {
-        margin: 0.25rem 0 0;
-        color: #ffffff;
-        font-size: 1.15rem;
-    }
-
-    .history-export-close {
-        display: inline-grid;
-        width: 34px;
-        height: 34px;
-        flex: 0 0 auto;
-        place-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.06);
-        color: rgba(244, 247, 250, 0.8);
-        cursor: pointer;
-    }
-
-    .history-export-options {
-        display: grid;
-        gap: 0.6rem;
-    }
-
-    .history-export-option {
-        display: flex;
-        align-items: center;
-        gap: 0.8rem;
-        min-width: 0;
-        padding: 0.75rem;
-        border: 1px solid rgba(105, 143, 176, 0.28);
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.035);
-        color: #ffffff;
-        text-decoration: none;
-        transition: border-color 0.16s ease, background-color 0.16s ease;
-    }
-
-    .history-export-option:hover,
-    .history-export-option:focus {
-        border-color: rgba(255, 255, 255, 0.45);
-        background: rgba(255, 255, 255, 0.08);
-        color: #ffffff;
-        text-decoration: none;
-    }
-
-    .history-export-option-icon {
-        display: inline-grid;
-        width: 38px;
-        height: 38px;
-        flex: 0 0 auto;
-        place-items: center;
-        border-radius: 4px;
-        background: rgba(223, 7, 26, 0.16);
-        color: #ff5a68;
-        font-size: 1.1rem;
-    }
-
-    .history-export-option-excel .history-export-option-icon {
-        background: rgba(25, 174, 83, 0.16);
-        color: #5be58a;
-    }
-
-    .history-export-option-copy {
-        display: flex;
-        min-width: 0;
-        flex: 1;
-        flex-direction: column;
-        gap: 0.18rem;
-    }
-
-    .history-export-option-copy strong {
-        font-size: 0.9rem;
-    }
-
-    .history-export-option-copy small {
-        color: rgba(244, 247, 250, 0.58);
-        font-size: 0.74rem;
-    }
-
-    .history-export-option-arrow {
-        color: rgba(244, 247, 250, 0.45);
-        font-size: 0.75rem;
-    }
-
-    .history-export-cancel {
-        display: block;
-        min-height: 36px;
-        margin: 0.9rem 0 0 auto;
-        padding: 0.4rem 0.8rem;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        border-radius: 4px;
-        background: transparent;
-        color: rgba(244, 247, 250, 0.78);
-        cursor: pointer;
-        font-size: 0.8rem;
     }
 
     .history-action-button {
@@ -897,44 +720,4 @@
         }
     }
 </style>
-@endpush
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.getElementById('historyExportModal');
-        const openButton = document.getElementById('historyExportButton');
-        const pdfLink = modal.querySelector('.history-export-option-pdf');
-        let previouslyFocusedElement = null;
-
-        function closeModal() {
-            modal.classList.remove('is-visible');
-            modal.setAttribute('aria-hidden', 'true');
-            document.body.style.overflow = '';
-            previouslyFocusedElement?.focus();
-        }
-
-        openButton.addEventListener('click', function () {
-            previouslyFocusedElement = document.activeElement;
-            modal.classList.add('is-visible');
-            modal.setAttribute('aria-hidden', 'false');
-            document.body.style.overflow = 'hidden';
-            pdfLink.focus();
-        });
-
-        modal.querySelectorAll('[data-history-export-close]').forEach(function (element) {
-            element.addEventListener('click', closeModal);
-        });
-
-        modal.querySelectorAll('.history-export-option').forEach(function (link) {
-            link.addEventListener('click', closeModal);
-        });
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
-                closeModal();
-            }
-        });
-    });
-</script>
 @endpush

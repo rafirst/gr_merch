@@ -20,15 +20,19 @@
             <a href="{{ route('items.index') }}" class="btn btn-secondary items-glossy" title="Reset filter" aria-label="Reset filter">
                 <i class="fas fa-undo-alt"></i>
             </a>
-            <a href="{{ route('items.export') }}" class="btn btn-success items-glossy" title="Export item" aria-label="Export item">
-                <i class="fas fa-file-pdf"></i>
-            </a>
             @if(auth()->user()->isAdminHo())
+                <button type="button" class="btn btn-success items-glossy" id="itemsExportButton" title="Export item" aria-label="Pilih format ekspor" aria-haspopup="dialog" aria-controls="itemsExportModal">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
                 <a href="{{ route('items.import.form') }}" class="btn btn-info items-glossy" title="Import item" aria-label="Import item">
                     <i class="fas fa-file-import"></i>
                 </a>
                 <a href="{{ route('items.create') }}" class="btn btn-primary items-glossy" title="Tambah item" aria-label="Tambah item">
                     <i class="fas fa-plus"></i>
+                </a>
+            @else
+                <a href="{{ route('items.export') }}" class="btn btn-success items-glossy" title="Export item" aria-label="Export item">
+                    <i class="fas fa-file-pdf"></i>
                 </a>
             @endif
         </div>
@@ -107,6 +111,15 @@
     </div>
 </div>
 @endsection
+
+@if(auth()->user()->isAdminHo())
+    @include('components.export-format-modal', [
+        'modalId' => 'itemsExportModal',
+        'label' => 'Data Items',
+        'pdfUrl' => route('items.export'),
+        'excelUrl' => route('items.export.excel'),
+    ])
+@endif
 
 <div class="items-confirm-modal" id="itemsConfirmModal" aria-hidden="true">
     <div class="items-confirm-backdrop" data-items-confirm-cancel></div>

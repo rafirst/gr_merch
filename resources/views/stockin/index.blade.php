@@ -18,7 +18,7 @@
             <a href="{{ route('stockin.index') }}" class="btn stockin-reset-button" title="Reset filter" aria-label="Reset filter"><i class="fas fa-undo-alt"></i></a>
         </form>
         <div class="stockin-header-actions">
-              <a href="{{ route('stockin.export') }}" class="btn btn-success stockin-toolbar-button stockin-export-button" title="Export barang masuk" aria-label="Export barang masuk"><i class="fas fa-file-pdf"></i></a>
+              <button type="button" class="btn btn-success stockin-toolbar-button stockin-export-button" id="stockinExportButton" title="Export barang masuk" aria-label="Pilih format ekspor" aria-haspopup="dialog" aria-controls="stockinExportModal"><i class="fas fa-file-pdf"></i></button>
               <a href="{{ route('stockin.import.form') }}" class="btn btn-info stockin-toolbar-button stockin-import-button" title="Import barang masuk" aria-label="Import barang masuk"><i class="fas fa-file-import"></i></a>
               <a href="{{ route('stockin.create') }}" class="btn btn-primary stockin-toolbar-button stockin-create-button" title="Tambah barang masuk" aria-label="Tambah barang masuk"><i class="fas fa-plus"></i></a>
         </div>
@@ -90,6 +90,13 @@
     </div>
 </div>
 @endsection
+
+@include('components.export-format-modal', [
+    'modalId' => 'stockinExportModal',
+    'label' => 'Barang Masuk',
+    'pdfUrl' => route('stockin.export'),
+    'excelUrl' => route('stockin.export.excel'),
+])
 
 <div class="stockin-confirm-modal" id="stockinConfirmModal" aria-hidden="true">
     <div class="stockin-confirm-backdrop" data-stockin-confirm-cancel></div>

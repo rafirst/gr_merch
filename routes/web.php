@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin_ho')->group(function () {
         Route::resource('items', ItemController::class)->except(['index', 'show']);
+        Route::get('/items-export/excel', [ExportImportController::class, 'exportItemsExcel'])->name('items.export.excel');
         Route::get('/items-import', [ExportImportController::class, 'showImportForm'])->name('items.import.form');
         Route::get('/items-import/template', [ExportImportController::class, 'exportItemsImportTemplate'])->name('items.import.template');
         Route::post('/items-import', [ExportImportController::class, 'importItems'])->name('items.import');
@@ -76,6 +77,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/stock-in', [StockInController::class, 'index'])->name('stockin.index');
         Route::get('/stock-in/export', [ExportImportController::class, 'exportStockIn'])->name('stockin.export');
+        Route::get('/stock-in/export/excel', [ExportImportController::class, 'exportStockInExcel'])->name('stockin.export.excel');
         Route::get('/stock-in/import', [ExportImportController::class, 'showStockInImportForm'])->name('stockin.import.form');
         Route::get('/stock-in/import/template', [ExportImportController::class, 'exportStockInImportTemplate'])->name('stockin.import.template');
         Route::post('/stock-in/import', [ExportImportController::class, 'importStockIn'])->name('stockin.import');

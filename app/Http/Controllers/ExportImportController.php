@@ -34,6 +34,14 @@ class ExportImportController extends Controller
         );
     }
 
+    public function exportItemsExcel()
+    {
+        return Excel::download(
+            new ItemsExport,
+            'data-items-gr-merch-'.now()->format('Ymd-His').'.xlsx',
+        );
+    }
+
     public function exportItemsImportTemplate()
     {
         return Excel::download(new ItemsImportTemplateExport, 'template-import-items-gr-merch.xlsx');
@@ -115,6 +123,14 @@ class ExportImportController extends Controller
             'Ringkasan jumlah dan status stok merchandise saat ini.',
             'Data Merchandise',
             'data-stok-items-gr-merch-'.now()->format('Ymd-His').'.pdf',
+        );
+    }
+
+    public function exportStockInExcel()
+    {
+        return Excel::download(
+            new StockItemsExport,
+            'data-stok-items-gr-merch-'.now()->format('Ymd-His').'.xlsx',
         );
     }
 

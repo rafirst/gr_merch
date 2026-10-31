@@ -57,6 +57,72 @@ class ExportPdfTest extends TestCase
         $this->assertStringContainsString('.xlsx', $response->headers->get('content-disposition'));
     }
 
+    public function test_items_and_stockin_excel_exports_download_xlsx_files(): void
+    {
+        /** @var User $admin */
+        $admin = User::factory()->create([
+            'role' => 'admin_ho',
+            'cabang_id' => null,
+        ]);
+
+        foreach (['items.export.excel', 'stockin.export.excel'] as $routeName) {
+            $response = $this->actingAs($admin)->get(route($routeName));
+
+            $response->assertOk()
+                ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $this->assertStringContainsString('.xlsx', $response->headers->get('content-disposition'));
+        }
+    }
+
+    public function test_staff_cabang_cannot_access_items_or_stockin_excel_exports(): void
+    {
+        $cabang = Cabang::create([
+            'kode_cabang' => 'TAG-07',
+            'nama_cabang' => 'TAG Cabang Export',
+        ]);
+        /** @var User $staff */
+        $staff = User::factory()->create([
+            'role' => 'staff_cabang',
+            'cabang_id' => $cabang->id,
+        ]);
+
+        foreach (['items.export.excel', 'stockin.export.excel'] as $routeName) {
+            $this->actingAs($staff)->get(route($routeName))->assertForbidden();
+        }
+    }
+
+    public function test_items_and_stockin_index_show_export_choices_to_admin_only(): void
+    {
+        $cabang = Cabang::create([
+            'kode_cabang' => 'TAG-08',
+            'nama_cabang' => 'TAG Cabang Export View',
+        ]);
+        /** @var User $admin */
+        $admin = User::factory()->create([
+            'role' => 'admin_ho',
+            'cabang_id' => null,
+        ]);
+        /** @var User $staff */
+        $staff = User::factory()->create([
+            'role' => 'staff_cabang',
+            'cabang_id' => $cabang->id,
+        ]);
+
+        $this->actingAs($admin)->get(route('items.index'))
+            ->assertOk()
+            ->assertSee(route('items.export.excel'), false)
+            ->assertSee('Pilih Format Ekspor');
+        $this->get(route('stockin.index'))
+            ->assertOk()
+            ->assertSee(route('stockin.export.excel'), false)
+            ->assertSee('Pilih Format Ekspor');
+
+        $this->actingAs($staff)->get(route('items.index'))
+            ->assertOk()
+            ->assertDontSee(route('items.export.excel'), false)
+            ->assertDontSee('Export Excel');
+    }
+
     public function test_staff_cabang_cannot_access_history_excel_export(): void
     {
         $cabang = Cabang::create([
