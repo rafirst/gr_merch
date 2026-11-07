@@ -920,7 +920,7 @@
                     <span class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                     <span class="user-copy">
                         <span class="user-name">{{ auth()->user()->name }}</span>
-                        <span class="user-role">{{ match (auth()->user()->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' } }}</span>
+                        <span class="user-role">{{ match (auth()->user()->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', 'adh' => 'ADH', default => 'Staff Cabang' } }}</span>
                     </span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userMenu">
@@ -929,7 +929,7 @@
                         <small>{{ auth()->user()->email }}</small>
                     </div>
                     <div class="user-popup-body">
-                        <small><i class="fas fa-id-badge mr-1"></i> {{ match (auth()->user()->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' } }}</small>
+                        <small><i class="fas fa-id-badge mr-1"></i> {{ match (auth()->user()->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', 'adh' => 'ADH', default => 'Staff Cabang' } }}</small>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf
                             <button type="submit" class="btn btn-sm btn-outline-danger">

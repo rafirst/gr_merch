@@ -186,6 +186,62 @@ class AdminRoleReadOnlyTest extends TestCase
         }
     }
 
+    public function test_adh_has_the_same_read_only_access_as_admin(): void
+    {
+        $adh = $this->createUser('adh', null);
+        $source = $this->createCabang('SRC');
+        $destination = $this->createCabang('DST');
+        $sourceItem = $this->createItem($source, 'ITEM-SRC');
+        $destinationItem = $this->createItem($destination, 'ITEM-DST');
+        $stockIn = $this->createStockIn($sourceItem, $source, $adh);
+        $this->createStockIn($destinationItem, $destination, $adh);
+        $stockOut = StockOut::create([
+            'item_id' => $sourceItem->id,
+            'cabang_id' => $source->id,
+            'jumlah' => 1,
+            'jenis' => 'penjualan',
+            'status' => 'approved',
+            'tanggal' => '2026-10-30',
+            'user_id' => $adh->id,
+        ]);
+        $transfer = TransferBarang::create([
+            'from_cabang_id' => $source->id,
+            'to_cabang_id' => $destination->id,
+            'created_by' => $adh->id,
+            'status' => TransferBarang::STATUS_PROSES,
+        ]);
+
+        $this->assertTrue($adh->isAdmin());
+        $this->assertTrue($adh->canViewAllData());
+        $this->actingAs($adh);
+
+        $this->get(route('items.index'))->assertOk()
+            ->assertSee($sourceItem->nama_items)
+            ->assertSee($destinationItem->nama_items)
+            ->assertDontSee(route('items.create'), false);
+        $this->get(route('stockin.index'))->assertOk()
+            ->assertSee($sourceItem->nama_items)
+            ->assertSee($destinationItem->nama_items)
+            ->assertDontSee(route('stockin.create'), false);
+        $this->get(route('stockout.index'))->assertOk()
+            ->assertDontSee(route('stockout.create'), false)
+            ->assertDontSee(route('stockout.edit', $stockOut), false)
+            ->assertDontSee('paymentModal-');
+        $this->get(route('transfers.index'))->assertOk()
+            ->assertSee($transfer->fromCabang->nama_cabang)
+            ->assertSee($transfer->toCabang->nama_cabang)
+            ->assertDontSee(route('transfers.create'), false);
+        $this->get(route('history.index'))->assertOk();
+
+        foreach (['items.export.excel', 'stockin.export.excel', 'history.export.excel'] as $routeName) {
+            $this->get(route($routeName))->assertOk();
+        }
+
+        foreach (['items.create', 'stockin.create', 'users.index', 'approval.index'] as $routeName) {
+            $this->get(route($routeName))->assertForbidden();
+        }
+    }
+
     public function test_administrator_can_create_an_admin_account_without_a_branch(): void
     {
         $administrator = $this->createUser('admin_ho', null);
@@ -206,6 +262,47 @@ class AdminRoleReadOnlyTest extends TestCase
             'role' => 'admin',
             'cabang_id' => null,
         ]);
+    }
+
+    public function test_administrator_can_create_an_adh_account_without_a_branch(): void
+    {
+        $administrator = $this->createUser('admin_ho', null);
+
+        $this->actingAs($administrator)
+            ->get(route('users.create'))->assertOk()
+            ->assertSee('value="adh"', false)
+            ->assertSee('>ADH</option>', false);
+
+        $this->withoutMiddleware(VerifyCsrfToken::class)
+            ->post(route('users.store'), [
+                'name' => 'ADH User',
+                'username' => 'adh-user',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+                'role' => 'adh',
+                'cabang_id' => '',
+            ])->assertRedirect(route('users.index'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('users', [
+            'username' => 'adh-user',
+            'role' => 'adh',
+            'cabang_id' => null,
+        ]);
+
+        $adh = User::where('username', 'adh-user')->firstOrFail();
+        $this->get(route('users.index'))->assertOk()
+            ->assertSee('ADH');
+        $this->get(route('users.show', $adh))->assertOk()
+            ->assertSee('ADH');
+
+        $this->put(route('users.update', $adh), [
+            'name' => $adh->name,
+            'username' => $adh->username,
+            'role' => 'adh',
+            'cabang_id' => '',
+        ])->assertRedirect(route('users.index'))
+            ->assertSessionHasNoErrors();
     }
 
     public function test_admin_role_keeps_the_selected_branch_when_created_and_updated(): void

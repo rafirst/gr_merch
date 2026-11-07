@@ -24,6 +24,7 @@
         <select name="role" class="form-control" required>
             <option value="staff_cabang" {{ old('role', $user->role ?? '') == 'staff_cabang' ? 'selected' : '' }}>Staff Cabang</option>
             <option value="admin" {{ old('role', $user->role ?? '') == 'admin' ? 'selected' : '' }}>Admin</option>
+            <option value="adh" {{ old('role', $user->role ?? '') == 'adh' ? 'selected' : '' }}>ADH</option>
             <option value="admin_ho" {{ old('role', $user->role ?? '') == 'admin_ho' ? 'selected' : '' }}>Administrator</option>
         </select>
     </div>

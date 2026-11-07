@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['admin', 'adh'], true);
     }
 
     public function canViewAllData(): bool

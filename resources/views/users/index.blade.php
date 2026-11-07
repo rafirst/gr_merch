@@ -17,8 +17,8 @@
                     <tr>
                         <td>{{ $u->name }}</td>
                         <td>{{ $u->username }}</td>
-                        @php($roleLabel = match ($u->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', default => 'Staff Cabang' })
-                        @php($roleBadge = match ($u->role) { 'admin_ho' => 'primary', 'admin' => 'info', default => 'secondary' })
+                        @php($roleLabel = match ($u->role) { 'admin_ho' => 'Administrator', 'admin' => 'Admin', 'adh' => 'ADH', default => 'Staff Cabang' })
+                        @php($roleBadge = match ($u->role) { 'admin_ho' => 'primary', 'admin', 'adh' => 'info', default => 'secondary' })
                         <td><span class="badge users-role-badge users-glossy badge-{{ $roleBadge }}">{{ $roleLabel }}</span></td>
                         <td>{{ $u->cabang->nama_cabang ?? '-' }}</td>
                         <td>
@@ -134,4 +134,3 @@
     }
 </style>
 @endpush
-

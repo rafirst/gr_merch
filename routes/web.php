@@ -33,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/items', [ItemController::class, 'index'])->name('items.index');
     Route::get('/items-export', [ExportImportController::class, 'exportItems'])->name('items.export');
     Route::get('/items-export/excel', [ExportImportController::class, 'exportItemsExcel'])
-        ->middleware('role:admin_ho,admin')->name('items.export.excel');
+        ->middleware('role:admin_ho,admin,adh')->name('items.export.excel');
 
     Route::middleware('role:admin_ho')->group(function () {
         Route::resource('items', ItemController::class)->except(['index', 'show']);
@@ -70,7 +70,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/history/show/{type}/{id}', [HistoryController::class, 'show'])->name('history.show');
     Route::get('/history-export', [ExportImportController::class, 'exportHistory'])->name('history.export');
     Route::get('/history-export/excel', [ExportImportController::class, 'exportHistoryExcel'])
-        ->middleware('role:admin_ho,admin')->name('history.export.excel');
+        ->middleware('role:admin_ho,admin,adh')->name('history.export.excel');
 
     // ===== Khusus Admin Pusat =====
     Route::middleware('role:admin_ho')->group(function () {
@@ -101,7 +101,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/approval/stock-in-edit/{editRequest}/reject', [ApprovalController::class, 'rejectStockInEdit'])->name('approval.stockin.edit.reject');
     });
 
-    Route::middleware('role:admin_ho,admin')->group(function () {
+    Route::middleware('role:admin_ho,admin,adh')->group(function () {
         Route::get('/stock-in', [StockInController::class, 'index'])->name('stockin.index');
         Route::get('/stock-in/export', [ExportImportController::class, 'exportStockIn'])->name('stockin.export');
         Route::get('/stock-in/export/excel', [ExportImportController::class, 'exportStockInExcel'])->name('stockin.export.excel');
