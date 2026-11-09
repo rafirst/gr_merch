@@ -9,7 +9,7 @@
             <select name="jenis" class="form-control mr-2" onchange="this.form.submit()">
                 <option value="">Semua Jenis</option>
                 <option value="penjualan" {{ request('jenis') == 'penjualan' ? 'selected' : '' }}>Penjualan</option>
-                <option value="hadiah" {{ request('jenis') == 'hadiah' ? 'selected' : '' }}>Hadiah</option>
+                <option value="DO" {{ request('jenis') == 'DO' ? 'selected' : '' }}>DO</option>
                 <option value="request" {{ request('jenis') == 'request' ? 'selected' : '' }}>Request</option>
             </select>
             <select name="status" class="form-control mr-2" onchange="this.form.submit()">

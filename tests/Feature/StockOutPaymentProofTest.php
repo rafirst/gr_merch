@@ -55,6 +55,41 @@ class StockOutPaymentProofTest extends TestCase
             ->assertSee('IM-93');
     }
 
+    public function test_index_type_filter_lists_and_filters_supported_transaction_types(): void
+    {
+        $cabang = $this->createCabang('C01');
+        $admin = $this->createUser('admin_ho', null);
+        $sale = $this->createStockOut($cabang, $admin, 'approved');
+        $deliveryOrder = $this->createStockOut($cabang, $admin, 'approved');
+        $deliveryOrder->update(['jenis' => 'DO']);
+        $request = $this->createStockOut($cabang, $admin, 'approved');
+        $request->update(['jenis' => 'request']);
+
+        $this->actingAs($admin)->get(route('stockout.index'))
+            ->assertOk()
+            ->assertSee('<option value="penjualan"', false)
+            ->assertSee('<option value="DO"', false)
+            ->assertSee('<option value="request"', false)
+            ->assertDontSee('<option value="hadiah"', false)
+            ->assertSeeText('Penjualan')
+            ->assertSeeText('DO')
+            ->assertSeeText('Request');
+
+        foreach ([
+            'penjualan' => $sale,
+            'DO' => $deliveryOrder,
+            'request' => $request,
+        ] as $type => $matchingTransaction) {
+            $response = $this->get(route('stockout.index', ['jenis' => $type]));
+
+            $response->assertOk()
+                ->assertViewHas('stockOuts', function ($stockOuts) use ($matchingTransaction): bool {
+                    return $stockOuts->total() === 1
+                        && $stockOuts->getCollection()->first()->id === $matchingTransaction->id;
+                });
+        }
+    }
+
     public function test_index_search_matches_spk_and_im_references(): void
     {
         $cabang = $this->createCabang('C01');
