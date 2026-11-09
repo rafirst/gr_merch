@@ -186,18 +186,29 @@ class AdminRoleReadOnlyTest extends TestCase
         }
     }
 
-    public function test_adh_has_the_same_read_only_access_as_admin(): void
+    public function test_adh_sees_only_branch_data_except_for_the_dashboard_stock_summary(): void
     {
-        $adh = $this->createUser('adh', null);
         $source = $this->createCabang('SRC');
         $destination = $this->createCabang('DST');
+        $unrelated = $this->createCabang('OTH');
+        $adh = $this->createUser('adh', $source->id);
         $sourceItem = $this->createItem($source, 'ITEM-SRC');
         $destinationItem = $this->createItem($destination, 'ITEM-DST');
-        $stockIn = $this->createStockIn($sourceItem, $source, $adh);
+        $unrelatedItem = $this->createItem($unrelated, 'ITEM-OTH');
+        $this->createStockIn($sourceItem, $source, $adh);
         $this->createStockIn($destinationItem, $destination, $adh);
         $stockOut = StockOut::create([
             'item_id' => $sourceItem->id,
             'cabang_id' => $source->id,
+            'jumlah' => 1,
+            'jenis' => 'penjualan',
+            'status' => 'approved',
+            'tanggal' => '2026-10-30',
+            'user_id' => $adh->id,
+        ]);
+        $otherStockOut = StockOut::create([
+            'item_id' => $destinationItem->id,
+            'cabang_id' => $destination->id,
             'jumlah' => 1,
             'jenis' => 'penjualan',
             'status' => 'approved',
@@ -210,28 +221,56 @@ class AdminRoleReadOnlyTest extends TestCase
             'created_by' => $adh->id,
             'status' => TransferBarang::STATUS_PROSES,
         ]);
+        $incomingTransfer = TransferBarang::create([
+            'from_cabang_id' => $destination->id,
+            'to_cabang_id' => $source->id,
+            'created_by' => $adh->id,
+            'status' => TransferBarang::STATUS_PROSES,
+        ]);
+        $unrelatedTransfer = TransferBarang::create([
+            'from_cabang_id' => $unrelated->id,
+            'to_cabang_id' => $destination->id,
+            'created_by' => $adh->id,
+            'status' => TransferBarang::STATUS_PROSES,
+        ]);
 
         $this->assertTrue($adh->isAdmin());
-        $this->assertTrue($adh->canViewAllData());
+        $this->assertFalse($adh->canViewAllData());
         $this->actingAs($adh);
 
+        $this->get(route('dashboard'))->assertOk()
+            ->assertSee(route('stockin.index'), false)
+            ->assertViewHas('totalItems', 1)
+            ->assertViewHas('stockItems', fn ($stockItems): bool => $stockItems->total() === 3);
         $this->get(route('items.index'))->assertOk()
             ->assertSee($sourceItem->nama_items)
-            ->assertSee($destinationItem->nama_items)
+            ->assertDontSee($destinationItem->nama_items)
+            ->assertDontSee($unrelatedItem->nama_items)
             ->assertDontSee(route('items.create'), false);
+        $this->get(route('items.show', $destinationItem))->assertForbidden();
         $this->get(route('stockin.index'))->assertOk()
             ->assertSee($sourceItem->nama_items)
-            ->assertSee($destinationItem->nama_items)
+            ->assertDontSee($destinationItem->nama_items)
             ->assertDontSee(route('stockin.create'), false);
         $this->get(route('stockout.index'))->assertOk()
+            ->assertSee(route('stockout.show', $stockOut), false)
+            ->assertDontSee(route('stockout.show', $otherStockOut), false)
             ->assertDontSee(route('stockout.create'), false)
             ->assertDontSee(route('stockout.edit', $stockOut), false)
             ->assertDontSee('paymentModal-');
+        $this->get(route('stockout.show', $otherStockOut))->assertForbidden();
         $this->get(route('transfers.index'))->assertOk()
             ->assertSee($transfer->fromCabang->nama_cabang)
             ->assertSee($transfer->toCabang->nama_cabang)
+            ->assertSee(route('transfers.show', $incomingTransfer), false)
+            ->assertDontSee(route('transfers.show', $unrelatedTransfer), false)
             ->assertDontSee(route('transfers.create'), false);
+        $this->get(route('history.index', ['tipe' => 'in']))->assertOk()
+            ->assertSee($sourceItem->nama_items)
+            ->assertDontSee($destinationItem->nama_items);
         $this->get(route('history.index'))->assertOk();
+        $this->get(route('transfers.show', $transfer))->assertOk();
+        $this->get(route('transfers.show', $unrelatedTransfer))->assertForbidden();
 
         foreach (['items.export.excel', 'stockin.export.excel', 'history.export.excel'] as $routeName) {
             $this->get(route($routeName))->assertOk();
@@ -264,9 +303,10 @@ class AdminRoleReadOnlyTest extends TestCase
         ]);
     }
 
-    public function test_administrator_can_create_an_adh_account_without_a_branch(): void
+    public function test_administrator_must_assign_a_branch_to_an_adh_account(): void
     {
         $administrator = $this->createUser('admin_ho', null);
+        $branch = $this->createCabang('ADH');
 
         $this->actingAs($administrator)
             ->get(route('users.create'))->assertOk()
@@ -281,13 +321,24 @@ class AdminRoleReadOnlyTest extends TestCase
                 'password_confirmation' => 'password123',
                 'role' => 'adh',
                 'cabang_id' => '',
-            ])->assertRedirect(route('users.index'))
+            ])->assertSessionHasErrors('cabang_id');
+
+        $this->assertDatabaseMissing('users', ['username' => 'adh-user']);
+
+        $this->post(route('users.store'), [
+            'name' => 'ADH User',
+            'username' => 'adh-user',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => 'adh',
+            'cabang_id' => $branch->id,
+        ])->assertRedirect(route('users.index'))
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('users', [
             'username' => 'adh-user',
             'role' => 'adh',
-            'cabang_id' => null,
+            'cabang_id' => $branch->id,
         ]);
 
         $adh = User::where('username', 'adh-user')->firstOrFail();
@@ -300,7 +351,7 @@ class AdminRoleReadOnlyTest extends TestCase
             'name' => $adh->name,
             'username' => $adh->username,
             'role' => 'adh',
-            'cabang_id' => '',
+            'cabang_id' => $branch->id,
         ])->assertRedirect(route('users.index'))
             ->assertSessionHasNoErrors();
     }

@@ -39,7 +39,7 @@ class User extends Authenticatable
 
     public function canViewAllData(): bool
     {
-        return $this->isAdminHo() || $this->isAdmin();
+        return in_array($this->role, ['admin_ho', 'admin'], true);
     }
 
     public function isStaffCabang(): bool

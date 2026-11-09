@@ -29,7 +29,7 @@
         </select>
     </div>
     <div class="form-group col-md-6">
-        <label>Cabang <small>(wajib untuk Staff Cabang)</small></label>
+        <label>Cabang <small>(wajib untuk Staff Cabang dan ADH)</small></label>
         <select name="cabang_id" class="form-control">
             <option value="">Tidak terikat cabang</option>
             @foreach($cabangs as $c)

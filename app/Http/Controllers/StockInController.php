@@ -36,7 +36,9 @@ class StockInController extends Controller
         }
 
         $items = $query->orderBy('nama_items')->paginate(15)->withQueryString();
-        $cabangs = Cabang::orderBy('nama_cabang')->get();
+        $cabangs = $user->canViewAllData()
+            ? Cabang::orderBy('nama_cabang')->get()
+            : collect([$user->cabang])->filter();
 
         return view('stockin.index', compact('items', 'cabangs'));
     }

@@ -38,7 +38,7 @@ class UserController extends Controller
             'username' => 'required|string|max:150|unique:users,username',
             'password' => 'required|min:6|confirmed',
             'role' => 'required|in:admin_ho,admin,adh,staff_cabang',
-            'cabang_id' => 'required_if:role,staff_cabang|nullable|exists:cabangs,id',
+            'cabang_id' => 'required_if:role,staff_cabang,adh|nullable|exists:cabangs,id',
         ]);
 
         $data['password'] = Hash::make($data['password']);
@@ -62,7 +62,7 @@ class UserController extends Controller
             'username' => 'required|string|max:150|unique:users,username,'.$user->id,
             'password' => 'nullable|min:6|confirmed',
             'role' => 'required|in:admin_ho,admin,adh,staff_cabang',
-            'cabang_id' => 'required_if:role,staff_cabang|nullable|exists:cabangs,id',
+            'cabang_id' => 'required_if:role,staff_cabang,adh|nullable|exists:cabangs,id',
         ]);
 
         $data['cabang_id'] = $data['role'] === 'admin_ho' ? null : ($data['cabang_id'] ?? null);

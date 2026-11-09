@@ -20,7 +20,7 @@
             <a href="{{ route('items.index') }}" class="btn btn-secondary items-glossy" title="Reset filter" aria-label="Reset filter">
                 <i class="fas fa-undo-alt"></i>
             </a>
-            @if(auth()->user()->canViewAllData())
+            @if(auth()->user()->canViewAllData() || auth()->user()->isAdmin())
                 <button type="button" class="btn btn-success items-glossy" id="itemsExportButton" title="Export item" aria-label="Pilih format ekspor" aria-haspopup="dialog" aria-controls="itemsExportModal">
                     <i class="fas fa-file-pdf"></i>
                 </button>
@@ -114,7 +114,7 @@
 </div>
 @endsection
 
-@if(auth()->user()->canViewAllData())
+@if(auth()->user()->canViewAllData() || auth()->user()->isAdmin())
     @include('components.export-format-modal', [
         'modalId' => 'itemsExportModal',
         'label' => 'Data Items',

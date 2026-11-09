@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', auth()->user()->canViewAllData() ? 'Transfer Barang' : 'Transfer Masuk')
+@section('title', auth()->user()->canViewAllData() || auth()->user()->role === 'adh' ? 'Transfer Barang' : 'Transfer Masuk')
 
 @section('content')
-@if(auth()->user()->canViewAllData())
+@if(auth()->user()->canViewAllData() || auth()->user()->role === 'adh')
     <div class="card transfer-card">
         <div class="card-header transfer-toolbar">
             <form method="GET" class="transfer-filters">

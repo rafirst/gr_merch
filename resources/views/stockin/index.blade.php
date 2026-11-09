@@ -99,7 +99,7 @@
     'modalId' => 'stockinExportModal',
     'label' => 'Barang Masuk',
     'pdfUrl' => route('stockin.export'),
-    'excelUrl' => auth()->user()->canViewAllData() ? route('stockin.export.excel') : null,
+    'excelUrl' => auth()->user()->canViewAllData() || auth()->user()->isAdmin() ? route('stockin.export.excel') : null,
 ])
 
 <div class="stockin-confirm-modal" id="stockinConfirmModal" aria-hidden="true">

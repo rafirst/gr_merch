@@ -26,8 +26,15 @@ class TransferBarangController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if ($user->canViewAllData()) {
+        if ($user->canViewAllData() || $user->role === 'adh') {
             $query = TransferBarang::with(['fromCabang', 'toCabang', 'creator', 'items.sourceItem']);
+
+            if (! $user->canViewAllData()) {
+                $query->where(function ($branchQuery) use ($user): void {
+                    $branchQuery->where('from_cabang_id', $user->cabang_id)
+                        ->orWhere('to_cabang_id', $user->cabang_id);
+                });
+            }
 
             if (in_array($request->input('status'), [
                 TransferBarang::STATUS_DITERIMA,
@@ -94,7 +101,11 @@ class TransferBarangController extends Controller
         /** @var User $user */
         $user = Auth::user();
         abort_unless(
-            $user->canViewAllData() || ($user->cabang_id !== null && (int) $transferBarang->to_cabang_id === (int) $user->cabang_id),
+            $user->canViewAllData()
+                || ($user->cabang_id !== null && (
+                    (int) $transferBarang->to_cabang_id === (int) $user->cabang_id
+                    || ($user->role === 'adh' && (int) $transferBarang->from_cabang_id === (int) $user->cabang_id)
+                )),
             403,
             'Anda tidak memiliki akses ke transfer cabang lain.'
         );

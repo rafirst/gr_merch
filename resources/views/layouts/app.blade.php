@@ -967,7 +967,7 @@
                             <i class="nav-icon fas fa-box"></i><p>Data Items</p>
                         </a>
                     </li>
-                    @if(auth()->user()->canViewAllData())
+                    @if(auth()->user()->canViewAllData() || auth()->user()->role === 'adh')
                     <li class="nav-item">
                         <a href="{{ route('stockin.index') }}" class="nav-link {{ request()->routeIs('stockin.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-arrow-down"></i><p>Barang Masuk</p>
@@ -976,7 +976,7 @@
                     @endif
                     <li class="nav-item">
                         <a href="{{ route('transfers.index') }}" class="nav-link {{ request()->routeIs('transfers.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-exchange-alt"></i><p>{{ auth()->user()->canViewAllData() ? 'Transfer Barang' : 'Transfer Masuk' }}</p>
+                            <i class="nav-icon fas fa-exchange-alt"></i><p>{{ auth()->user()->canViewAllData() || auth()->user()->role === 'adh' ? 'Transfer Barang' : 'Transfer Masuk' }}</p>
                         </a>
                     </li>
                     <li class="nav-item">

@@ -89,7 +89,10 @@ class StockOutController extends Controller
 
         $stockOut->load(['item', 'cabang', 'user', 'approver']);
         $stockOuts = $stockOut->batch_id
-            ? StockOut::with(['item', 'cabang', 'user', 'approver'])->where('batch_id', $stockOut->batch_id)->get()
+            ? StockOut::with(['item', 'cabang', 'user', 'approver'])
+                ->where('batch_id', $stockOut->batch_id)
+                ->when(! $user->canViewAllData(), fn ($query) => $query->where('cabang_id', $user->cabang_id))
+                ->get()
             : collect([$stockOut]);
 
         return view('stockout.show', compact('stockOut', 'stockOuts'));
@@ -316,7 +319,10 @@ class StockOutController extends Controller
 
         $stockOut->load(['item', 'cabang', 'user', 'approver']);
         $stockOuts = $stockOut->batch_id
-            ? StockOut::with(['item', 'cabang', 'user', 'approver'])->where('batch_id', $stockOut->batch_id)->get()
+            ? StockOut::with(['item', 'cabang', 'user', 'approver'])
+                ->where('batch_id', $stockOut->batch_id)
+                ->when(! $user->canViewAllData(), fn ($query) => $query->where('cabang_id', $user->cabang_id))
+                ->get()
             : collect([$stockOut]);
 
         return view('stockout.invoice', compact('stockOut', 'stockOuts'));
@@ -334,7 +340,10 @@ class StockOutController extends Controller
         try {
             $stockOut->load(['item', 'cabang', 'user', 'approver']);
             $stockOuts = $stockOut->batch_id
-                ? StockOut::with(['item', 'cabang', 'user', 'approver'])->where('batch_id', $stockOut->batch_id)->get()
+                ? StockOut::with(['item', 'cabang', 'user', 'approver'])
+                    ->where('batch_id', $stockOut->batch_id)
+                    ->when(! $user->canViewAllData(), fn ($query) => $query->where('cabang_id', $user->cabang_id))
+                    ->get()
                 : collect([$stockOut]);
 
             $pdf = new Dompdf([

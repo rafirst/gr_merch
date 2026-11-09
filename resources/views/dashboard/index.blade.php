@@ -9,7 +9,7 @@
         </a>
     </div>
     <div class="col-lg-4 col-6">
-        <a href="{{ $canViewAllData ? route('stockin.index') : route('items.index') }}" class="small-box total-stock-box dashboard-link-box" title="{{ $canViewAllData ? 'Buka Data Stock Masuk' : 'Buka Data Items' }}">
+        <a href="{{ $canViewAllData || auth()->user()->role === 'adh' ? route('stockin.index') : route('items.index') }}" class="small-box total-stock-box dashboard-link-box" title="{{ $canViewAllData || auth()->user()->role === 'adh' ? 'Buka Data Stock Masuk' : 'Buka Data Items' }}">
             <div class="inner">
                 <h3>{{ $totalStok }}</h3>
                 <p>Total Stok</p>
