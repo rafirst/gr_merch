@@ -57,6 +57,143 @@ class ExportPdfTest extends TestCase
         $this->assertStringContainsString('.xlsx', $response->headers->get('content-disposition'));
     }
 
+    public function test_stock_out_history_exports_add_sales_details_and_batch_totals_once(): void
+    {
+        $cabang = Cabang::create([
+            'kode_cabang' => 'TAG-EXPORT',
+            'nama_cabang' => 'TAG Export',
+        ]);
+        /** @var User $admin */
+        $admin = User::factory()->create([
+            'role' => 'admin_ho',
+            'cabang_id' => null,
+        ]);
+        $batchId = '22222222-2222-4222-8222-222222222222';
+
+        foreach ([
+            ['ITEM-UMBRELLA-RED', 'Umbrella Red', 100000],
+            ['ITEM-UMBRELLA-BLACK', 'Umbrella Black', 200000],
+        ] as [$itemCode, $itemName, $price]) {
+            $item = Item::create([
+                'kode_items' => $itemCode,
+                'nama_items' => $itemName,
+                'kategori' => 'jacket',
+                'harga_items' => 50000,
+                'stok_items' => 5,
+                'harga_jual' => $price,
+                'cabang_id' => $cabang->id,
+            ]);
+            StockOut::create([
+                'item_id' => $item->id,
+                'cabang_id' => $cabang->id,
+                'jumlah' => 1,
+                'jenis' => 'penjualan',
+                'jenis_pembayaran' => 'transfer',
+                'harga_jual' => $price,
+                'discount' => 10,
+                'total' => $price * 0.9,
+                'nama_customer' => 'Rafi',
+                'nik_ktp' => '1234567890123456',
+                'alamat_customer' => 'Palembang',
+                'batch_id' => $batchId,
+                'status' => 'approved',
+                'tanggal' => '2026-11-13',
+                'user_id' => $admin->id,
+            ]);
+        }
+
+        $requestItem = Item::create([
+            'kode_items' => 'ITEM-REQUEST-EXPORT',
+            'nama_items' => 'Request Item',
+            'kategori' => 'jacket',
+            'harga_items' => 50000,
+            'stok_items' => 5,
+            'harga_jual' => 0,
+            'cabang_id' => $cabang->id,
+        ]);
+        StockOut::create([
+            'item_id' => $requestItem->id,
+            'cabang_id' => $cabang->id,
+            'jumlah' => 1,
+            'jenis' => 'request',
+            'status' => 'approved',
+            'tanggal' => '2026-11-13',
+            'user_id' => $admin->id,
+        ]);
+
+        $this->actingAs($admin);
+        $export = new HistoryExport(['tipe' => 'out']);
+        $rows = $export->collection();
+        $mappedRows = $rows->map(fn (StockOut $row): array => $export->map($row))->values();
+
+        $this->assertSame(
+            ['Tanggal', 'No.Invoice', 'Cabang', 'Item', 'Jumlah', 'Jenis', 'Referensi', 'NIK', 'Alamat', 'Subtotal', 'Diskon', 'PPN', 'Total', 'Status', 'Pembayaran'],
+            $export->headings(),
+        );
+        $this->assertCount(3, $mappedRows);
+
+        foreach ($rows->values() as $index => $row) {
+            $this->assertSame(str_pad((string) $row->id, 6, '0', STR_PAD_LEFT), $mappedRows[$index][1]);
+            $this->assertSame('TAG Export', $mappedRows[$index][2]);
+        }
+
+        $summaryRows = $mappedRows->filter(fn (array $row): bool => $row[11] !== '-')->values();
+        $this->assertCount(1, $summaryRows);
+        $this->assertSame('Rp 29.700', $summaryRows[0][11]);
+        $this->assertSame('Rp 299.700', $summaryRows[0][12]);
+        $this->assertSame('1234567890123456', $summaryRows[0][7]);
+        $this->assertSame('Palembang', $summaryRows[0][8]);
+        $this->assertSame('Rp 100.000', $mappedRows->firstWhere(3, 'Umbrella Red')[9]);
+        $this->assertSame('Rp 10.000', $mappedRows->firstWhere(3, 'Umbrella Red')[10]);
+        $otherSaleRows = $mappedRows->filter(fn (array $row): bool => $row[5] === 'Penjualan' && $row[11] === '-')->values();
+        $this->assertCount(1, $otherSaleRows);
+        $this->assertSame('-', $otherSaleRows[0][12]);
+        $requestRows = $mappedRows->filter(fn (array $row): bool => $row[5] === 'Request')->values();
+        $requestRecord = $rows->first(fn (StockOut $row): bool => $row->jenis === 'request');
+        $this->assertSame(['-', '-', '-', '-', '-', '-'], array_slice($requestRows[0], 7, 6));
+        $this->assertSame(str_pad((string) $requestRecord->id, 6, '0', STR_PAD_LEFT), $requestRows[0][1]);
+        $this->assertSame('TAG Export', $requestRows[0][2]);
+
+        $filteredExport = new HistoryExport(['tipe' => 'out', 'item' => 'Umbrella Red']);
+        $filteredRows = $filteredExport->collection();
+        $this->assertCount(1, $filteredRows);
+        $filteredSummary = $filteredExport->map($filteredRows->first());
+        $this->assertSame('Rp 29.700', $filteredSummary[11]);
+        $this->assertSame('Rp 299.700', $filteredSummary[12]);
+
+        $excelContent = Excel::raw(new HistoryExport(['tipe' => 'out']), ExcelFormat::XLSX);
+        $temporaryFile = tempnam(sys_get_temp_dir(), 'history-stock-out-export-');
+
+        try {
+            file_put_contents($temporaryFile, $excelContent);
+            $spreadsheet = IOFactory::load($temporaryFile);
+            $exportedRows = $spreadsheet->getActiveSheet()->toArray();
+
+            $this->assertSame('No.Invoice', $exportedRows[0][1]);
+            $this->assertSame('Cabang', $exportedRows[0][2]);
+            $this->assertSame('Item', $exportedRows[0][3]);
+            $this->assertSame('NIK', $exportedRows[0][7]);
+            $this->assertSame('Alamat', $exportedRows[0][8]);
+            $this->assertSame('Subtotal', $exportedRows[0][9]);
+            $this->assertSame('Diskon', $exportedRows[0][10]);
+            $this->assertSame('PPN', $exportedRows[0][11]);
+            $this->assertSame('Total', $exportedRows[0][12]);
+            $this->assertNotContains('DPP', $exportedRows[0]);
+            $this->assertSame('Status', $exportedRows[0][13]);
+            $this->assertSame('Pembayaran', $exportedRows[0][14]);
+            $this->assertSame(1, count(array_filter(
+                array_slice($exportedRows, 1),
+                fn (array $row): bool => $row[11] === 'Rp 29.700',
+            )));
+        } finally {
+            @unlink($temporaryFile);
+        }
+
+        $pdfResponse = $this->get(route('history.export', ['tipe' => 'out']));
+        $pdfResponse->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->assertStringStartsWith('%PDF-', $pdfResponse->getContent());
+    }
+
     public function test_items_and_stockin_excel_exports_download_xlsx_files(): void
     {
         /** @var User $admin */
@@ -362,8 +499,11 @@ class ExportPdfTest extends TestCase
         $this->assertCount(1, $stockInExport->collection());
         $this->assertSame(['Tanggal', 'Item', 'Cabang', 'Jumlah', 'Oleh'], $stockInExport->headings());
         $this->assertCount(1, $stockOutExport->collection());
-        $this->assertSame('SPK-FILTER', $stockOutExport->map($deliveryOrder)[5]);
-        $this->assertSame(['Tanggal', 'Item', 'Jumlah', 'Jenis', 'Status', 'Referensi', 'Pembayaran'], $stockOutExport->headings());
+        $this->assertSame('SPK-FILTER', $stockOutExport->map($deliveryOrder)[6]);
+        $this->assertSame(['Tanggal', 'No.Invoice', 'Cabang', 'Item', 'Jumlah', 'Jenis', 'Referensi', 'NIK', 'Alamat', 'Subtotal', 'Diskon', 'PPN', 'Total', 'Status', 'Pembayaran'], $stockOutExport->headings());
+        $this->assertSame(str_pad((string) $deliveryOrder->id, 6, '0', STR_PAD_LEFT), $stockOutExport->map($deliveryOrder)[1]);
+        $this->assertSame($cabang->nama_cabang, $stockOutExport->map($deliveryOrder)[2]);
+        $this->assertSame(['-', '-', '-', '-', '-', '-'], array_slice($stockOutExport->map($deliveryOrder), 7, 6));
         $this->assertCount(1, $approvalExport->collection());
         $this->assertSame('Approval Transaksi', $approvalExport->map($approval)[4]);
         $this->assertSame('Edit Stok', $approvalExport->map(StockInEditRequest::first())[4]);

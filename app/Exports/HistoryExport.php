@@ -16,6 +16,11 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class HistoryExport implements FromCollection, WithHeadings, WithMapping
 {
     /**
+     * @var array<int, array{ppn: int, total: float}>
+     */
+    private array $stockOutFinancialSummaries = [];
+
+    /**
      * @param  array{tipe?: string|null, jenis?: string|null, item?: string|null, dari?: string|null, sampai?: string|null}  $filters
      */
     public function __construct(private readonly array $filters = []) {}
@@ -24,7 +29,7 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
     {
         return match ($this->filters['tipe'] ?? null) {
             'in' => $this->stockInQuery()->latest('tanggal')->get(),
-            'out' => $this->stockOutQuery()->latest('tanggal')->get(),
+            'out' => $this->stockOutCollection(),
             'approval' => $this->approvalCollection(),
             default => $this->stockInQuery()->get()
                 ->concat($this->stockOutQuery()->get())
@@ -41,6 +46,96 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
         $this->applyItemAndDateFilters($query, 'tanggal');
 
         return $query;
+    }
+
+    private function stockOutCollection(): Collection
+    {
+        $stockOuts = $this->stockOutQuery()->latest('tanggal')->get();
+        $this->prepareStockOutFinancialSummaries($stockOuts);
+
+        return $stockOuts;
+    }
+
+    private function prepareStockOutFinancialSummaries(Collection $stockOuts): void
+    {
+        $this->stockOutFinancialSummaries = [];
+        $saleRows = $stockOuts->filter(fn (StockOut $row): bool => $row->jenis === 'penjualan');
+
+        if ($saleRows->isEmpty()) {
+            return;
+        }
+
+        $firstSelectedRowByGroup = [];
+        foreach ($saleRows as $row) {
+            $groupKey = $this->stockOutGroupKey($row);
+            $firstSelectedRowByGroup[$groupKey] ??= $row->id;
+        }
+
+        $batchIds = $saleRows->pluck('batch_id')->filter()->unique()->values();
+        $unbatchedIds = $saleRows->filter(fn (StockOut $row): bool => $row->batch_id === null)
+            ->pluck('id')
+            ->all();
+
+        $financialRows = StockOut::with('item')
+            ->where(function (Builder $query) use ($batchIds, $unbatchedIds): void {
+                if ($batchIds->isNotEmpty()) {
+                    $query->whereIn('batch_id', $batchIds);
+
+                    if ($unbatchedIds !== []) {
+                        $query->orWhereIn('id', $unbatchedIds);
+                    }
+
+                    return;
+                }
+
+                $query->whereIn('id', $unbatchedIds);
+            });
+        $this->applyBranchScope($financialRows);
+
+        $groups = $financialRows->get()
+            ->filter(fn (StockOut $row): bool => $row->jenis === 'penjualan')
+            ->groupBy(fn (StockOut $row): string => $this->stockOutGroupKey($row));
+
+        foreach ($groups as $groupKey => $rows) {
+            $summaryRowId = $firstSelectedRowByGroup[$groupKey] ?? null;
+
+            if ($summaryRowId === null) {
+                continue;
+            }
+
+            $subtotal = $rows->sum(fn (StockOut $row): float => $this->stockOutLineSubtotal($row));
+            $discountedSubtotal = $rows->sum(function (StockOut $row): float {
+                if ($row->total !== null) {
+                    return (float) $row->total;
+                }
+
+                return $this->stockOutLineSubtotal($row) * (1 - ((float) ($row->discount ?? 0) / 100));
+            });
+            $discountAmount = $subtotal - $discountedSubtotal;
+            $dpp = $subtotal - $discountAmount;
+            $ppnAmount = (int) round($dpp * 0.11);
+
+            $this->stockOutFinancialSummaries[$summaryRowId] = [
+                'ppn' => $ppnAmount,
+                'total' => $dpp + $ppnAmount,
+            ];
+        }
+    }
+
+    private function stockOutGroupKey(StockOut $row): string
+    {
+        return $row->batch_id !== null
+            ? 'batch:'.$row->batch_id
+            : 'row:'.$row->id;
+    }
+
+    private function stockOutLineSubtotal(StockOut $row): float
+    {
+        $unitPrice = $row->harga_jual !== null
+            ? (float) $row->harga_jual
+            : (float) ($row->item->harga_jual ?? 0);
+
+        return $unitPrice * (int) $row->jumlah;
     }
 
     private function stockOutQuery(): Builder
@@ -113,7 +208,7 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
     {
         return match ($this->filters['tipe'] ?? null) {
             'in' => ['Tanggal', 'Item', 'Cabang', 'Jumlah', 'Oleh'],
-            'out' => ['Tanggal', 'Item', 'Jumlah', 'Jenis', 'Referensi', 'Status', 'Pembayaran'],
+            'out' => ['Tanggal', 'No.Invoice', 'Cabang', 'Item', 'Jumlah', 'Jenis', 'Referensi', 'NIK', 'Alamat', 'Subtotal', 'Diskon', 'PPN', 'Total', 'Status', 'Pembayaran'],
             'approval' => ['Tanggal', 'Item', 'Jumlah', 'User Pengaju', 'Tipe', 'Status', 'Approved By', 'Catatan'],
             default => $this->summaryHeadings(),
         };
@@ -169,8 +264,17 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
         }
 
         if (($this->filters['tipe'] ?? null) === 'out') {
+            $financialSummary = $this->stockOutFinancialSummaries[$row->id] ?? null;
+            $isSale = $row->jenis === 'penjualan';
+            $lineSubtotal = $isSale ? $this->stockOutLineSubtotal($row) : null;
+            $lineDiscount = $lineSubtotal !== null
+                ? $lineSubtotal * ((float) ($row->discount ?? 0) / 100)
+                : null;
+
             return [
                 $row->tanggal->format('Y-m-d'),
+                str_pad((string) $row->id, 6, '0', STR_PAD_LEFT),
+                $row->cabang->nama_cabang ?? '-',
                 $row->item->nama_items ?? '-',
                 $row->jumlah,
                 ucfirst($row->jenis),
@@ -180,6 +284,12 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
                     'request' => $row->nomor_im ?: '-',
                     default => '-',
                 },
+                $isSale ? ($row->nik_ktp ?: '-') : '-',
+                $isSale ? ($row->alamat_customer ?: '-') : '-',
+                $lineSubtotal !== null ? $this->formatCurrency($lineSubtotal) : '-',
+                $lineDiscount !== null ? $this->formatCurrency($lineDiscount) : '-',
+                $financialSummary !== null ? $this->formatCurrency($financialSummary['ppn']) : '-',
+                $financialSummary !== null ? $this->formatCurrency($financialSummary['total']) : '-',
                 ucfirst($row->status),
                 $row->jenis_pembayaran ? ucfirst($row->jenis_pembayaran) : '-',
             ];
@@ -201,5 +311,10 @@ class HistoryExport implements FromCollection, WithHeadings, WithMapping
             $isStockIn ? '-' : $row->total,
             $row->user->name ?? '-',
         ];
+    }
+
+    private function formatCurrency(float|int $amount): string
+    {
+        return 'Rp '.number_format($amount, 0, ',', '.');
     }
 }

@@ -721,14 +721,13 @@
             return $unitPrice * (int) $row->jumlah;
         });
         $hasTransactionTotal = $stockOut->jenis === 'penjualan' || $stockOut->jenis === 'DO';
-        $ppnAmount = $hasTransactionTotal ? (int) round($subtotal * 0.11) : null;
         $discountAmount = $stockOut->jenis === 'DO' ? 0 : ($hasTransactionTotal ? $subtotal - $stockOuts->sum(fn ($row) => (float) ($row->total ?? 0)) : null);
+        $dpp = $hasTransactionTotal ? $subtotal - ($discountAmount ?? 0) : 0;
+        $ppnAmount = $hasTransactionTotal ? (int) round($dpp * 0.11) : null;
         $discountLabel = $stockOut->jenis === 'DO'
             ? 'Potongan (0%)'
             : ($stockOut->jenis === 'penjualan' ? $stockOut->discountLabel() : 'Discount '.rtrim(rtrim(number_format($stockOut->discount ?? 0, 2, '.', ''), '0'), '.').'%');
-        $totalAkhir = $stockOut->jenis === 'DO'
-            ? $subtotal + ($ppnAmount ?? 0)
-            : $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0) + ($ppnAmount ?? 0);
+        $totalAkhir = $dpp + ($ppnAmount ?? 0);
 
         // Rekening transfer per cabang, sama dengan data di halaman create Barang Keluar.
         $transferAccounts = [

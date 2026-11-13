@@ -61,6 +61,20 @@ class StockOutInvoiceTransferTest extends TestCase
             ->assertDontSee('Silahkan transfer bank melalui:', false);
     }
 
+    public function test_invoice_calculates_tax_and_total_from_discounted_subtotal(): void
+    {
+        $cabang = $this->createCabang('PLG');
+        $admin = $this->createAdmin();
+        $stockOut = $this->createStockOut($cabang, $admin, 'transfer');
+
+        $response = $this->actingAs($admin)->get(route('stockout.invoice', $stockOut));
+
+        $response->assertOk()
+            ->assertSee('Rp 12.000')
+            ->assertSee('Rp 11.880')
+            ->assertSee('Rp 119.880');
+    }
+
     private function createCabang(string $code): Cabang
     {
         return Cabang::create([

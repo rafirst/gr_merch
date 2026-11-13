@@ -330,11 +330,9 @@
         }
 
         const hasTransactionTotal = ['penjualan', 'DO'].includes(jenisSelect.value);
-        const ppnAmount = hasTransactionTotal ? Math.round(subtotal * 0.11) : 0;
-        const subtotalWithPpn = subtotal + ppnAmount;
-        const totalAfterDiscount = jenisSelect.value === 'DO'
-            ? subtotalWithPpn
-            : total + ppnAmount;
+        const dpp = jenisSelect.value === 'DO' ? subtotal : total;
+        const ppnAmount = hasTransactionTotal ? Math.round(dpp * 0.11) : 0;
+        const totalAfterDiscount = dpp + ppnAmount;
         const discountLabel = jenisSelect.value === 'penjualan'
             ? 'Discount ' + discount + '%'
             : 'Potongan (0%)';

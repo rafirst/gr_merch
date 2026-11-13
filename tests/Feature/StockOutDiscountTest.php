@@ -114,6 +114,8 @@ class StockOutDiscountTest extends TestCase
             ->assertSee('data-harga-jual="120000.00"', false)
             ->assertSee("'Discount ' + discount + '%'", false)
             ->assertSee("discountInput.value === 'retail_non_ktp'", false)
+            ->assertSee("const dpp = jenisSelect.value === 'DO' ? subtotal : total;", false)
+            ->assertSee('Math.round(dpp * 0.11)', false)
             ->assertSee('id="previewDiscountRow"', false);
     }
 
@@ -232,11 +234,13 @@ class StockOutDiscountTest extends TestCase
             ->assertSee('<th>Harga Jual</th>', false)
             ->assertSee('Rp 200.000')
             ->assertSee('Rp 400.000')
-            ->assertSee('Rp 360.000')
             ->assertSee('Rp 40.000');
 
         $this->assertSame(1, substr_count($response->getContent(), '<th>Diskon</th>'));
         $this->assertMatchesRegularExpression('/<td>Rp 200\\.000<\/td>\s*<td>2\s*<\/td>\s*<td>Rp 400\\.000<\/td>/', $response->getContent());
+        $response->assertSee('<th>PPN 11%</th>', false)
+            ->assertSee('Rp 39.600')
+            ->assertSee('Rp 399.600');
     }
 
     public function test_do_detail_calculates_line_total_summary_and_tax_from_item_sale_price(): void
@@ -261,8 +265,7 @@ class StockOutDiscountTest extends TestCase
 
         $content = $response->getContent();
         $this->assertMatchesRegularExpression('/<td>Rp 120\\.000<\/td>\s*<td>2\s*<\/td>\s*<td>Rp 240\\.000<\/td>/', $content);
-        $this->assertMatchesRegularExpression('/<td>Rp 240\\.000<\/td>\s*<td>-<\/td>\s*<td class="stockout-detail-grand-total">Rp 266\\.400<\/td>/', $content);
-        $response->assertSee('PPN 11%: <strong>Rp 26.400</strong>', false);
+        $this->assertMatchesRegularExpression('/<td>Rp 240\\.000<\/td>\s*<td>-<\/td>\s*<td>Rp 26\\.400<\/td>\s*<td class="stockout-detail-grand-total">Rp 266\\.400<\/td>/', $content);
     }
 
     /** @return array{0: User, 1: Item} */

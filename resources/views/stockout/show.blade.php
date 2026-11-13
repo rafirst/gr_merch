@@ -12,17 +12,18 @@
 
         return $unitPrice * (int) $row->jumlah;
     });
-    $ppnAmount = $stockOut->jenis === 'DO' ? (int) round($subtotal * 0.11) : 0;
-    $totalAkhir = match ($stockOut->jenis) {
-        'DO' => $subtotal + $ppnAmount,
+    $hasTransactionTotal = in_array($stockOut->jenis, ['penjualan', 'DO'], true);
+    $discountedTotal = match ($stockOut->jenis) {
+        'DO' => $subtotal,
         'penjualan' => $stockOuts->sum(fn ($row) => (float) ($row->item->harga_jual ?? 0)
             * (int) $row->jumlah
             * (1 - ((float) ($row->discount ?? 0) / 100))),
         default => $stockOuts->sum(fn ($row) => $row->total !== null ? (float) $row->total : 0),
     };
-    $discountAmount = $stockOut->jenis === 'DO'
-        ? 0
-        : $subtotal - $totalAkhir;
+    $discountAmount = $stockOut->jenis === 'penjualan' ? $subtotal - $discountedTotal : 0;
+    $dpp = $hasTransactionTotal ? $subtotal - $discountAmount : $discountedTotal;
+    $ppnAmount = $hasTransactionTotal ? (int) round($dpp * 0.11) : 0;
+    $totalAkhir = $hasTransactionTotal ? $dpp + $ppnAmount : $discountedTotal;
     $discountDisplay = $stockOut->jenis === 'DO'
         ? 'Rp '.number_format($discountAmount, 0, ',', '.')
         : $stockOut->discountLabel();
@@ -217,6 +218,7 @@
                         <tr>
                             <th>Subtotal</th>
                             <th>Diskon</th>
+                            <th>PPN 11%</th>
                             <th>Total Akhir</th>
                         </tr>
                     </thead>
@@ -224,14 +226,12 @@
                         <tr>
                             <td>{{ $subtotal > 0 ? 'Rp '.number_format($subtotal, 0, ',', '.') : '-' }}</td>
                             <td>{{ $discountAmount > 0 ? 'Rp '.number_format($discountAmount, 0, ',', '.') : '-' }}</td>
+                            <td>{{ $hasTransactionTotal ? 'Rp '.number_format($ppnAmount, 0, ',', '.') : '-' }}</td>
                             <td class="stockout-detail-grand-total">{{ $totalAkhir > 0 ? 'Rp '.number_format($totalAkhir, 0, ',', '.') : '-' }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            @if($stockOut->jenis === 'DO')
-                <p class="stockout-detail-tax">PPN 11%: <strong>Rp {{ number_format($ppnAmount, 0, ',', '.') }}</strong> (termasuk dalam total akhir)</p>
-            @endif
         </section>
 
         <div class="stockout-detail-actions">
@@ -399,7 +399,7 @@
 
     .stockout-detail-summary-table th,
     .stockout-detail-summary-table td {
-        width: 33.333%;
+        width: 25%;
     }
 
     .stockout-detail-table tbody .stockout-detail-grand-total {

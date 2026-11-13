@@ -62,7 +62,7 @@
                 <h4 id="historySummaryTitle">Ringkasan Transaksi</h4>
             </div>
             <div class="history-detail-grid">
-                <div class="history-detail-row"><span>ID Transaksi</span><strong>#{{ str_pad((string) $record->id, 6, '0', STR_PAD_LEFT) }}</strong></div>
+                <div class="history-detail-row"><span>No Invoice</span><strong>#{{ str_pad((string) $record->id, 6, '0', STR_PAD_LEFT) }}</strong></div>
                 <div class="history-detail-row"><span>Tanggal</span><strong>{{ $formatTanggal($isStockInApproval ? $record->new_tanggal : $record->tanggal) }}</strong></div>
                 <div class="history-detail-row"><span>Item</span><strong>{{ $item?->nama_items ?? '-' }}</strong></div>
                 <div class="history-detail-row"><span>Cabang</span><strong>{{ $cabang?->nama_cabang ?? '-' }}</strong></div>
